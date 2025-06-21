@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from .models import Category, Article, CustomUser
 
-"""Создание пользователя"""
+"""CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -68,7 +68,7 @@ class ReviewerSerializer(serializers.ModelSerializer):
         fields = ['username', 'first_name', 'last_name']
 
 
-"""Создание стати"""
+"""CREATE ARTICLE"""
 class ArticleCreateSerializer(serializers.ModelSerializer):
     reviewers = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), many=True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
@@ -98,7 +98,7 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 
         return article
 
-"""CURD операции по id стати"""
+"""CURD OPERATIONS WITH ARTICLES"""
 class ArticleDetailSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True)
     reviewers = CustomUserSerializer(many=True)
@@ -109,7 +109,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'authors', 'title', 'abstract', 'keywords', 'file',
                   'submission_date', 'status', 'is_published', 'category', 'reviewers']
 
-"""Стати с Авторами, категориями, и рецензистами"""
+"""VIEW ARTICLES, WITH: AUTHORS, REVIEWERS AND CATEGORY"""
 class ArticleViewSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     authors = AuthorSerializer(many=True)
@@ -123,7 +123,7 @@ class ArticleViewSerializer(serializers.ModelSerializer):
                   'category', 'reviewers']
 
 
-"""Сериализаторы для Пользователя и его статей"""
+"""SERIALIZER'S FOR ARTICLE OF USER"""
 class OnlyArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article

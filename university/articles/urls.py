@@ -12,15 +12,15 @@ def home_redirect(request):
 
 urlpatterns = [
     path('', home_redirect,),
-    #Регистрация пользователя
+    #register user, login, logout
     path('register/', RegisterView.as_view(), name='register'),
     path('logout/', LogoutView.as_view(), name ='logout'),
     path('login/', LoginAPIView.as_view(), name='login'),
-    #Создание/показ статьи
+    #create, view, view detail
     path('articles/', ArticleListCreateView.as_view(), name='article-list'),
     path('articles/<int:pk>', ArticleRetrieveUpdateDestroyView.as_view(), name='article-detail'),
-    #Пользователи и их статьи
+    #users with article
     path('users/', UsersArticlesView.as_view(), name='users-list'),
-    #Поданные статьи на рассмотрение
+    #is published articles
     path('articles/publishing', ArticlesSubmitted.as_view(), name='publishing-articles'),
 ]
