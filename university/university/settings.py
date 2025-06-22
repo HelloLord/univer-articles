@@ -1,4 +1,4 @@
-
+import os
 from pathlib import Path
 from .secrets import SECRET_KEY
 
@@ -10,7 +10,8 @@ SECRET_KEY = SECRET_KEY
 
 ALLOWED_HOSTS = []
 
-
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 
 INSTALLED_APPS = [
