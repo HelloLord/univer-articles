@@ -5,7 +5,7 @@ from django.urls import path
 from .views import (ArticleListCreateView,
                     RegisterView, UsersArticlesView,
                     PublishArticleView, LogoutView, LoginAPIView,
-                    PublishArticleByIDView)
+                    PublishArticleByIDView, CURDArticlesByPK)
 
 
 def home_redirect(request):
@@ -19,6 +19,7 @@ urlpatterns = [
     path('login/', LoginAPIView.as_view(), name='login'),
     #create, view, view detail published
     path('articles/', ArticleListCreateView.as_view(), name='article-list'),
+    path('articles/<int:pk>',CURDArticlesByPK.as_view(),),
     #users with article
     path('users/', UsersArticlesView.as_view(), name='users-list'),
     #is published articles

@@ -75,25 +75,25 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         return None
 
 # Вложенные сериализаторы, реализуют отображения нужных полей в основных объектах
-class CategorySerializer(BaseArticleSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name']
 
 
-class AuthorSerializer(BaseArticleSerializer):
+class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['username', 'first_name', 'last_name']
 
 
-class ReviewerSerializer(BaseArticleSerializer):
+class ReviewerSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['username', 'first_name', 'last_name']
 
 
-class OnlyArticleSerializer(BaseArticleSerializer):
+class OnlyArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = ['id', 'title']
@@ -103,7 +103,7 @@ class OnlyArticleSerializer(BaseArticleSerializer):
 
 """POST ARTICLE srlz.01"""
 '''Реализует добавление статьи до публикации'''
-class ArticleCreateSerializer(BaseArticleSerializer):
+class ArticleCreateSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     category_name = serializers.CharField(source='category.name', read_only=True)
     class Meta:
@@ -124,6 +124,12 @@ class ArticleCreateSerializer(BaseArticleSerializer):
         article.save()
 
         return article
+
+"""CURD ARTICLES BY PK"""
+class ArticleViewByPKSerializer(BaseArticleSerializer):
+    class Meta:
+        model = Article
+        fields = '__all__'
 
 
 """PATCH(published) Article By PK srlz.03"""

@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from .models import Article, CustomUser
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
                           UserViewSerializer, ArticleCreateSerializer,
-                          ArticlePublishingSerializer,
+                          ArticlePublishingSerializer, ArticleViewByPKSerializer,
                           )
 
 
@@ -77,6 +77,12 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         article = serializer.save()
         detail_serializer = BaseArticleSerializer(article)
         return Response(detail_serializer.data)
+
+
+"""CURD ARTICLES BY PK"""
+class CURDArticlesByPK(generics.RetrieveUpdateDestroyAPIView):
+        queryset = Article.objects.all()
+        serializer_class = ArticleViewByPKSerializer
 
 
 
