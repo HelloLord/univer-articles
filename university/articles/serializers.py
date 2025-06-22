@@ -51,6 +51,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise serializers.ValidationError('Error creating user: '+ str(e))
 
+
 #Вложенные сериализаторы, реализуют отображения нужных полей в основных объектах
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -68,35 +69,7 @@ class ReviewerSerializer(serializers.ModelSerializer):
         fields = ['username', 'first_name', 'last_name']
 
 
-"""CREATE ARTICLE"""
-class ArticleCreateSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-    category_name = serializers.CharField(source='category.name', read_only=True)
-    class Meta:
-        model = Article
-        fields = ['id', 'title',
-                  'abstract', 'file',
-                  'submission_date',
-                  'category','category_name']
-
-    def create(self,validated_data):
-        #Берет за автора, Текущего авторизированного пользователя.
-        current_user = self.context['request'].user
-
-        reviewers = validated_data.pop('reviewers', [])
-        category = validated_data.pop('category')
-
-        article = Article.objects.create(**validated_data)
-
-        article.authors.add(current_user)
-
-        article.reviewers.set(reviewers)
-        article.category = category
-        article.save()
-
-        return article
-
-"""VIEW ARTICLES, WITH: AUTHORS, REVIEWERS AND CATEGORY """
+"""VIEW ARTICLES srlz.01"""
 class ArticleViewSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     authors = AuthorSerializer(many=True)
@@ -110,24 +83,50 @@ class ArticleViewSerializer(serializers.ModelSerializer):
                   'category', 'reviewers']
 
 
-"""CURD OPERATIONS WITH ARTICLES BY ID"""
-class ArticleDetailSerializer(serializers.ModelSerializer):
-    authors = AuthorSerializer(many=True)
-    reviewers = CustomUserSerializer(many=True)
-    category = CategorySerializer()
+"""POST ARTICLE srlz.02"""
+class ArticleCreateSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    class Meta:
+        model = Article
+        fields = ['id', 'title',
+                  'abstract', 'file',
+                  'submission_date',
+                  'category','category_name']
+
+    def create(self,validated_data):
+        #Берет за автора, Текущего авторизированного пользователя.
+        current_user = self.context['request'].user
+        reviewers = validated_data.pop('reviewers', [])
+        category = validated_data.pop('category')
+        article = Article.objects.create(**validated_data)
+        article.authors.add(current_user)
+        article.reviewers.set(reviewers)
+        article.category = category
+        article.save()
+
+        return article
+
+
+
+"""PATCH(published) Article By PK srlz.03"""
+class ArticlePublishingSerializer(serializers.ModelSerializer):
+    reviewers = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=CustomUser.objects.all()
+    )
+    author = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Article
-        fields = ['id', 'authors', 'title', 'abstract', 'keywords', 'file',
-                  'submission_date', 'status', 'is_published', 'category', 'reviewers']
+        fields = ['is_published', 'reviewers', 'author']
 
 
-"""SERIALIZER'S FOR ARTICLE OF USER"""
+"""Articles posted by Users srlz.04""" 'users/'
 class OnlyArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = ['id', 'title']
-
 class UserViewSerializer(serializers.ModelSerializer):
     articles = OnlyArticleSerializer(many=True, read_only=True)
     article_count = serializers.SerializerMethodField()

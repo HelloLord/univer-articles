@@ -2,9 +2,9 @@ from django.shortcuts import redirect
 from django.urls import path
 
 
-from .views import (ArticleListCreateView, ArticleRetrieveUpdateDestroyView,
+from .views import (ArticleListCreateView,
                     RegisterView, UsersArticlesView,
-                    ArticlesSubmitted, LogoutView, LoginAPIView)
+                    PublishArticleView, LogoutView, LoginAPIView, PublishArticleByIDView)
 
 
 def home_redirect(request):
@@ -18,9 +18,12 @@ urlpatterns = [
     path('login/', LoginAPIView.as_view(), name='login'),
     #create, view, view detail
     path('articles/', ArticleListCreateView.as_view(), name='article-list'),
-    path('articles/<int:pk>', ArticleRetrieveUpdateDestroyView.as_view(), name='article-detail'),
     #users with article
     path('users/', UsersArticlesView.as_view(), name='users-list'),
     #is published articles
-    path('articles/publishing', ArticlesSubmitted.as_view(), name='publishing-articles'),
+    path('articles/publishing', PublishArticleView.as_view(),
+         name='publishing-articles'),
+
+    path('articles/publishing/<int:pk>', PublishArticleByIDView.as_view(),
+         name = 'publishing-articles-pk')
 ]

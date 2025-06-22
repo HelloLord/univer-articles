@@ -1,5 +1,9 @@
+from datetime import datetime
+from functools import partial
+from os.path import isabs
 from django.contrib.auth import login
 from django.shortcuts import redirect
+from django.template.context_processors import request
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -10,7 +14,8 @@ from rest_framework.views import APIView
 from .models import Article, CustomUser
 from .serializers import (ArticleViewSerializer, CustomUserSerializer,
                           UserViewSerializer, ArticleCreateSerializer,
-                          ArticleDetailSerializer)
+                          ArticlePublishingSerializer,
+                          )
 
 """Registration""" 'register/'
 class RegisterView(generics.CreateAPIView):
@@ -26,6 +31,7 @@ class RegisterView(generics.CreateAPIView):
         login(request, user)
 
         return redirect('article-list')
+    
 
 """login""" 'login/'
 class LoginAPIView(APIView):
@@ -40,13 +46,17 @@ class LoginAPIView(APIView):
         else:
             return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
 
+
+
 """LogOut""" 'logout/'
 class LogoutView(View):
     def get(self,request):
         logout(request)
         return redirect('article-list')
 
-"""GET or POST Articles""" 'articles/'
+
+
+"""GET srlz.01 or POST Articles srlz.02""" 'articles/'
 class ArticleListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
@@ -71,22 +81,42 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         detail_serializer = ArticleViewSerializer(article)
         return Response(detail_serializer.data)
 
-"""CURD Articles by PK"""
-class ArticleRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+
+"""All Submitted Articles srlz.01""" 'articles/publishing'
+class PublishArticleView(generics.ListAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
-    queryset = Article.objects.all()
-    serializer_class = ArticleDetailSerializer
+    queryset = Article.objects.filter(is_published=False)
+    serializer_class = ArticleViewSerializer
+
+"""GET srlz.01 and PATCH(published) Article By PK srlz.03"""
+class PublishArticleByIDView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_serializer_class(self):
+        if self.request.method == 'PATCH':
+            return ArticlePublishingSerializer
+        return ArticleViewSerializer
+
+    def get_queryset(self):
+        article_id = self.kwargs.get('pk')
+        return Article.objects.filter(id=article_id, is_published = False)
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        serializer = ArticlePublishingSerializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(is_published=True)
+
+        detail_serializer = ArticleViewSerializer(instance)
+        return Response(detail_serializer.data)
 
 
-"""Articles posted by Users""" 'users/'
+
+"""Articles POST by Users srlz.04""" 'users/'
 class UsersArticlesView(generics.ListAPIView):
     queryset = CustomUser.objects.prefetch_related('articles')
     serializer_class = UserViewSerializer
 
-
-"""Submitted Articles""" 'articles/publishing'
-class ArticlesSubmitted(generics.ListAPIView):
-    queryset = Article.objects.filter(is_published=False)
-    serializer_class = ArticleViewSerializer
 
 
