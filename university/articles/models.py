@@ -13,6 +13,9 @@ class CustomUser(AbstractUser):
 class Category(models.Model):
     name = models.CharField(max_length=200)
 
+    def __str__(self):
+        return self.name
+
 class Article(models.Model):
     STATUS_CHOICES = [
         ('submitted', 'Подана'),
@@ -25,7 +28,7 @@ class Article(models.Model):
     title = models.CharField(max_length=100)
     authors = models.ManyToManyField(CustomUser, related_name='articles')
     abstract = models.TextField()
-    keywords = models.CharField(max_length=200)
+    keywords = models.CharField(max_length=200, null=True)
     file = models.FileField(upload_to='articles/',
                             blank=True,
                             null=True,

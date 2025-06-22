@@ -51,7 +51,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise serializers.ValidationError('Error creating user: '+ str(e))
 
-
+#Вложенные сериализаторы, реализуют отображения нужных полей в основных объектах
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -70,19 +70,17 @@ class ReviewerSerializer(serializers.ModelSerializer):
 
 """CREATE ARTICLE"""
 class ArticleCreateSerializer(serializers.ModelSerializer):
-    reviewers = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), many=True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-
+    category_name = serializers.CharField(source='category.name', read_only=True)
     class Meta:
         model = Article
         fields = ['id', 'title',
-                  'abstract', 'keywords', 'file',
-                  'submission_date', 'status', 'is_published',
-                  'category', 'reviewers']
+                  'abstract', 'file',
+                  'submission_date',
+                  'category','category_name']
 
     def create(self,validated_data):
-            #Берем авторизированного пользователя за автора стати
-
+        #Берет за автора, Текущего авторизированного пользователя.
         current_user = self.context['request'].user
 
         reviewers = validated_data.pop('reviewers', [])
@@ -98,18 +96,7 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 
         return article
 
-"""CURD OPERATIONS WITH ARTICLES"""
-class ArticleDetailSerializer(serializers.ModelSerializer):
-    authors = AuthorSerializer(many=True)
-    reviewers = CustomUserSerializer(many=True)
-    category = CategorySerializer()
-
-    class Meta:
-        model = Article
-        fields = ['id', 'authors', 'title', 'abstract', 'keywords', 'file',
-                  'submission_date', 'status', 'is_published', 'category', 'reviewers']
-
-"""VIEW ARTICLES, WITH: AUTHORS, REVIEWERS AND CATEGORY"""
+"""VIEW ARTICLES, WITH: AUTHORS, REVIEWERS AND CATEGORY """
 class ArticleViewSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     authors = AuthorSerializer(many=True)
@@ -121,6 +108,18 @@ class ArticleViewSerializer(serializers.ModelSerializer):
                   'abstract', 'keywords', 'file',
                   'submission_date', 'status', 'is_published',
                   'category', 'reviewers']
+
+
+"""CURD OPERATIONS WITH ARTICLES BY ID"""
+class ArticleDetailSerializer(serializers.ModelSerializer):
+    authors = AuthorSerializer(many=True)
+    reviewers = CustomUserSerializer(many=True)
+    category = CategorySerializer()
+
+    class Meta:
+        model = Article
+        fields = ['id', 'authors', 'title', 'abstract', 'keywords', 'file',
+                  'submission_date', 'status', 'is_published', 'category', 'reviewers']
 
 
 """SERIALIZER'S FOR ARTICLE OF USER"""
