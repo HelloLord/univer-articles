@@ -55,9 +55,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 """0 BASE SERIALIZER RELIZING BASE FUNCTIONAL"""
-'''Базовый сериализатор, реализует основной функционал'''
+'''articles/' | 'articles/publishing'''
 class BaseArticleSerializer(serializers.ModelSerializer):
     file_content = serializers.SerializerMethodField()
+    file = serializers.FileField(write_only=True)
     class Meta:
         model = Article
         fields = [
@@ -101,16 +102,15 @@ class OnlyArticleSerializer(serializers.ModelSerializer):
 
 
 
-"""POST ARTICLE srlz.01"""
+"""POST ARTICLE srlz.01""" 'articles/'
 '''Реализует добавление статьи до публикации'''
 class ArticleCreateSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-    category_name = serializers.CharField(source='category.name', read_only=True)
     class Meta:
         model = Article
         fields = ['id', 'title',
                   'abstract', 'file',
-                  'category','category_name']
+                  'category']
 
     def create(self,validated_data):
         #Берет за автора, Текущего авторизированного пользователя.
@@ -125,7 +125,8 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 
         return article
 
-"""CURD ARTICLES BY PK"""
+"""CURD ARTICLES BY PK srlz.04"""
+'''articles/<int:pk>'''
 class ArticleViewByPKSerializer(BaseArticleSerializer):
     class Meta:
         model = Article
@@ -133,14 +134,18 @@ class ArticleViewByPKSerializer(BaseArticleSerializer):
 
 
 """PATCH(published) Article By PK srlz.03"""
+''''articles/publishing<int:pk>'''
 '''Реализует публикацию неопубликованной статьи'''
 class ArticlePublishingSerializer(BaseArticleSerializer):
+    file_content = serializers.SerializerMethodField()
+    file = serializers.FileField(write_only=True)
     class Meta(BaseArticleSerializer.Meta):
         fields = BaseArticleSerializer.Meta.fields
-        read_only_fields = ['file']
 
 
-"""Articles posted by Users srlz.04""" 'users/'
+
+"""Articles posted by Users srlz.04"""
+'''users/'''
 '''Показывает зарегистрированных пользователей и их статьи'''
 class UserViewSerializer(serializers.ModelSerializer):
     articles = OnlyArticleSerializer(many=True, read_only=True)

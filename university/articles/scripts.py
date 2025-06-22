@@ -1,6 +1,6 @@
 from PyPDF2 import PdfReader
 import io
-from PyPDF2.errors import EmptyFileError, PdfReadError
+from PyPDF2.errors import EmptyFileError
 
 """extract text form pdf file"""
 def extract_text_from_pdf(pdf_file):
