@@ -2,11 +2,12 @@ from django.shortcuts import redirect
 from django.urls import path
 
 
-from .views import (ArticleListCreateView,
+from .views import (ArticleCreateView,
                     RegisterView, UsersArticlesView,
                     LogoutView, LoginAPIView,
                     CURDArticlesByPK, ReviewArticleByIDView,
-                    ReviewArticleView, PublishArticleView, PublishArticleIDView)
+                    ReviewArticleView, PublishArticleView,
+                    PublishArticleIDView, ArticleListView)
 
 
 def home_redirect(request):
@@ -19,7 +20,9 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name ='logout'),
     path('login/', LoginAPIView.as_view(), name='login'),
     #create, view, view detail published
-    path('articles/', ArticleListCreateView.as_view(), name='article-list'),
+    path('articles/', ArticleListView.as_view(), name='article-list'),
+    path('articles/create', ArticleCreateView.as_view(), name='article-create'),
+
     path('articles/<int:pk>',CURDArticlesByPK.as_view(),),
     #users with article
     path('users/', UsersArticlesView.as_view(), name='users-list'),

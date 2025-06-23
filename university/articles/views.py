@@ -51,18 +51,18 @@ class LogoutView(View):
 
 '''articles/ '''
 '''Выводит список статей, которые уже прошли рецензию и опубликованы '''
-'''Публиковать могут только авторизированные пользователи'''
-class ArticleListCreateView(generics.ListCreateAPIView):
+class ArticleListView(generics.ListAPIView):
+    serializer_class = BaseArticleSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         return Article.objects.filter(status = 'published')
 
-    #Возвращает нужный сериализатор в зависимости от GET/POST запроса
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return ArticleCreateSerializer #Берет за автора, авторизованного пользователя
-        return BaseArticleSerializer
+'''articles/create'''
+'''Публиковать могут только авторизированные пользователи'''
+class ArticleCreateView(generics.CreateAPIView):
+    serializer_class = ArticleCreateSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -73,6 +73,7 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         article = serializer.save()
+
         detail_serializer = BaseArticleSerializer(article)
         return Response(detail_serializer.data)
 
