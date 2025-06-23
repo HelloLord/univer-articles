@@ -4,8 +4,9 @@ from django.urls import path
 
 from .views import (ArticleListCreateView,
                     RegisterView, UsersArticlesView,
-                    PublishArticleView, LogoutView, LoginAPIView,
-                    PublishArticleByIDView, CURDArticlesByPK)
+                    LogoutView, LoginAPIView,
+                    CURDArticlesByPK, ReviewArticleByIDView,
+                    ReviewArticleView, PublishArticleView, PublishArticleIDView)
 
 
 def home_redirect(request):
@@ -22,10 +23,12 @@ urlpatterns = [
     path('articles/<int:pk>',CURDArticlesByPK.as_view(),),
     #users with article
     path('users/', UsersArticlesView.as_view(), name='users-list'),
-    #is published articles
-    path('articles/publishing', PublishArticleView.as_view(),
-         name='publishing-articles'),
+    # Review articles
+    path('articles/review', ReviewArticleView.as_view(),
+         name='review-articles'),
+    path('articles/review/<int:pk>', ReviewArticleByIDView.as_view(),
+         name = 'review-articles-pk'),
 
-    path('articles/publishing/<int:pk>', PublishArticleByIDView.as_view(),
-         name = 'publishing-articles-pk')
+    path('articles/publish', PublishArticleView.as_view(), name='publish-article'),
+    path('articles/publish/<int:pk>', PublishArticleIDView.as_view(), name = 'publish-article-pk')
 ]

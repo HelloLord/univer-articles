@@ -20,21 +20,15 @@ class Article(models.Model):
     STATUS_CHOICES = [
         ('submitted', 'Подана'),
         ('under_review', 'На рецензировании'),
-        ('accepted', 'Принята'),
-        ('rejected', 'Отклонена'),
         ('published', 'Опубликована'),
+        ('rejected', 'Отклонена'),
     ]
 
     title = models.CharField(max_length=100)
     authors = models.ManyToManyField(CustomUser, related_name='articles')
     abstract = models.TextField()
     keywords = models.CharField(max_length=200, null=True)
-    file = models.FileField(upload_to='articles/',
-                            blank=True,
-                            null=True,
-                            validators=[FileExtensionValidator(['pdf', 'docx'])],
-                            help_text='Загрузите статью в формате pdf или docx',
-                            )
+    content = models.TextField(blank=True, null=True)
     submission_date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=20, choices = STATUS_CHOICES, default='submitted')
     reviewers = models.ManyToManyField(CustomUser, related_name='reviews', blank=True)
@@ -42,7 +36,7 @@ class Article(models.Model):
     is_published = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.title, self.reviewers.name
+        return self.title
 
 
 

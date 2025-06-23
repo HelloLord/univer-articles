@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Category, Article, CustomUser
-from .scripts import extract_text_from_pdf
 
 """CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -51,31 +50,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise serializers.ValidationError('Error creating user: '+ str(e))
 
-
-
-
-"""0 BASE SERIALIZER RELIZING BASE FUNCTIONAL"""
-'''articles/' | 'articles/publishing'''
-class BaseArticleSerializer(serializers.ModelSerializer):
-    file_content = serializers.SerializerMethodField()
-    file = serializers.FileField(write_only=True)
-    class Meta:
-        model = Article
-        fields = [
-            'id', 'title', 'authors', 'abstract', 'keywords', 'file',
-            'submission_date', 'status', 'reviewers', 'category', 'is_published',
-            'file_content'
-        ]
-        read_only_fields = ['submission_date']
-
-    def get_file_content(self, obj):
-        if obj.file:
-            text = extract_text_from_pdf(obj.file)
-            lines = text.split('\n')
-            return lines
-        return None
-
-# Вложенные сериализаторы, реализуют отображения нужных полей в основных объектах
+"""Вложенные сериализаторы, реализуют отображения нужных полей в основных объектах"""
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -100,16 +75,29 @@ class OnlyArticleSerializer(serializers.ModelSerializer):
         fields = ['id', 'title']
 
 
+"""Базовый сериализатор, реализует поля Article и поля вложенных объектов сериализаторов"""
+'''articles/' | 'articles/review | /articles/publish'''
+class BaseArticleSerializer(serializers.ModelSerializer):
+    authors = AuthorSerializer(many=True,read_only=True)
+    reviewers = ReviewerSerializer(many=True,read_only=True)
+    class Meta:
+        model = Article
+        fields = [
+            'id', 'title', 'authors', 'abstract', 'keywords', 'content',
+            'submission_date', 'status', 'reviewers', 'category', 'is_published',
+        ]
+        read_only_fields = ['submission_date','status']
 
 
-"""POST ARTICLE srlz.01""" 'articles/'
-'''Реализует добавление статьи до публикации'''
+
+
+'''Реализует создание статьи с учетом текущего авторизированного пользователя'''
 class ArticleCreateSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     class Meta:
         model = Article
         fields = ['id', 'title',
-                  'abstract', 'file',
+                  'abstract', 'content',
                   'category']
 
     def create(self,validated_data):
@@ -122,38 +110,75 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         article.reviewers.set(reviewers)
         article.category = category
         article.save()
-
         return article
+
+
+
+
+''''articles/review<int:pk>'''
+'''Реализует рецензирование статьи'''
+'''рецензентом может быть как авторизированный пользователь'''
+'''так и возможность выбрать самому из списка'''
+class ArticleReviewSerializer(BaseArticleSerializer):
+    authors = AuthorSerializer(many=True, read_only=True)
+
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        required=False
+    )
+    reviewers = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        many = True
+    )
+    class Meta(BaseArticleSerializer.Meta):
+        fields = BaseArticleSerializer.Meta.fields + ['reviewers']
+        read_only_fields = ['is_published','status']
+
+    def update(self, instance, validated_data):
+        reviewers = validated_data.pop('reviewers', [])
+        instance = super().update(instance, validated_data)
+        instance.reviewers.clear()
+        instance.reviewers.add(*reviewers)
+        instance.status = 'under_review'
+        instance.save()
+
+        return instance
+
+'''Добавляет статью is_published=True'''
+'''Реализует публикацию статьи, которая прошла рецензирование'''
+'''/articles/publish/<int:pk>'''
+class ArticlePublishSerializer(BaseArticleSerializer):
+    class Meta(BaseArticleSerializer.Meta):
+        fields = '__all__'
+        read_only_fields = [
+            'id', 'title', 'abstract', 'content', 'keywords',
+            'submission_date', 'status', 'category', 'authors', 'reviewers'
+        ]
+
+    def update(self, instance, validated_data):
+        instance.is_published = validated_data.get('is_published', False)
+        instance.status = 'published'
+        instance.save()
+        return instance
+
+
+
 
 """CURD ARTICLES BY PK srlz.04"""
 '''articles/<int:pk>'''
-class ArticleViewByPKSerializer(BaseArticleSerializer):
+class ArticleViewByPKSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
-
-
-"""PATCH(published) Article By PK srlz.03"""
-''''articles/publishing<int:pk>'''
-'''Реализует публикацию неопубликованной статьи'''
-class ArticlePublishingSerializer(BaseArticleSerializer):
-    file_content = serializers.SerializerMethodField()
-    file = serializers.FileField(write_only=True)
-    class Meta(BaseArticleSerializer.Meta):
-        fields = BaseArticleSerializer.Meta.fields
-
 
 
 """Articles posted by Users srlz.04"""
 '''users/'''
 '''Показывает зарегистрированных пользователей и их статьи'''
 class UserViewSerializer(serializers.ModelSerializer):
-    articles = OnlyArticleSerializer(many=True, read_only=True)
-    article_count = serializers.SerializerMethodField()
-
     class Meta:
         model = CustomUser
-        fields = ['id','username', 'first_name', 'last_name', 'articles','article_count']
+        fields = ['id','username', 'first_name', 'last_name', 'articles', 'article_count']
 
     def get_article_count(self,obj):
         return obj.articles.count()
