@@ -121,6 +121,7 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 '''Реализует рецензирование статьи'''
 '''рецензентом может быть как авторизированный пользователь'''
 '''так и возможность выбрать самому из списка'''
+'''реализована возможность отмены статьи'''
 class ArticleReviewSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True, read_only=True)
 
@@ -132,20 +133,26 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
         queryset=CustomUser.objects.all(),
         many = True
     )
+    STATUS_CHOICES = [
+        ('under_review', 'Прошла рецензирование'),
+        ('rejected', 'Отклонена'),
+    ]
+    status = serializers.ChoiceField(choices=STATUS_CHOICES)
     class Meta:
         model = Article
         fields = '__all__'
-        read_only_fields = ['is_published','status']
+        read_only_fields = ['is_published']
 
     def update(self, instance, validated_data):
         reviewers = validated_data.pop('reviewers', [])
         instance = super().update(instance, validated_data)
         instance.reviewers.clear()
         instance.reviewers.add(*reviewers)
-        instance.status = 'under_review'
         instance.save()
 
         return instance
+
+
 
 '''Добавляет статью is_published=True'''
 '''Реализует публикацию статьи, которая прошла рецензирование'''

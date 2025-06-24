@@ -17,8 +17,8 @@ class Category(models.Model):
 
 class Article(models.Model):
     STATUS_CHOICES = [
-        ('submitted', 'Подана'),
-        ('under_review', 'На рецензировании'),
+        ('submitted', 'Подана на рецензирование'),
+        ('under_review', 'Прошла рецензирование'),
         ('published', 'Опубликована'),
         ('rejected', 'Отклонена'),
     ]

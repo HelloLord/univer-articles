@@ -95,26 +95,27 @@ class ReviewArticleByIDView(generics.RetrieveUpdateAPIView):
         serializer.save()
         return redirect('review-articles')
 
+'''articles/rejected'''
+'''Выводит список отклоненных статей'''
+class RejectArticlesList(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Article.objects.filter(status='rejected')
+    serializer_class = BaseArticleSerializer
 
 
-
-
-
-'''articles/publish '''
+'''articles/publishing '''
 '''Выводит список статей готовых к публикации'''
 class PublishArticleView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     queryset = Article.objects.filter(status='under_review')
     serializer_class = BaseArticleSerializer
 
-'''articles/publish/<int:pk>'''
+'''articles/publishing/<int:pk>'''
 '''Публикация конкретной статьи по ID'''
 class PublishArticleIDView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Article.objects.filter(status='under_review')
     serializer_class = ArticlePublishSerializer
-
-
 
 
 '''articles/<int:pk>'''
