@@ -1,5 +1,6 @@
+from time import timezone
+
 from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer
 
 from .models import Category, Article, CustomUser
 
@@ -86,11 +87,10 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         model = Article
         fields = [
             'id', 'title', 'authors', 'abstract', 'keywords', 'content',
-            'submission_date', 'status', 'reviewers', 'category', 'is_published',
+            'submission_date','updated_date', 'status', 'reviewers', 'category', 'is_published',
+
         ]
         read_only_fields = ['submission_date','status']
-
-
 
 
 '''Реализует создание статьи с учетом текущего авторизированного пользователя'''
@@ -149,7 +149,6 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
         instance.reviewers.clear()
         instance.reviewers.add(*reviewers)
         instance.save()
-
         return instance
 
 
@@ -165,7 +164,8 @@ class ArticlePublishSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = [
             'id', 'title', 'abstract', 'content', 'keywords',
-            'submission_date', 'status', 'category', 'authors', 'reviewers'
+            'submission_date', 'status', 'category', 'authors', 'reviewers',
+            'updated_date'
         ]
 
     def update(self, instance, validated_data):

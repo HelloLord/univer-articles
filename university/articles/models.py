@@ -29,6 +29,7 @@ class Article(models.Model):
     keywords = models.CharField(max_length=200, null=True)
     content = models.TextField(blank=True, null=True)
     submission_date = models.DateField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=20, choices = STATUS_CHOICES, default='submitted')
     reviewers = models.ManyToManyField(CustomUser, related_name='reviews', blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)

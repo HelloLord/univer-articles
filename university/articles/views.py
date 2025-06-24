@@ -1,6 +1,3 @@
-from audioop import reverse
-
-from django.http import HttpResponseBase, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -8,6 +5,7 @@ from rest_framework.response import Response
 from django.contrib.auth import logout,authenticate,login
 from django.views import View
 from rest_framework.views import APIView
+from .utils import clean_rejected_articles
 
 from .models import Article, CustomUser
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
@@ -85,22 +83,18 @@ class ReviewArticleByIDView(generics.RetrieveUpdateAPIView):
     def get_queryset(self):
         return Article.objects.filter(status='submitted')
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        obj = generics.get_object_or_404(queryset, pk=self.kwargs['pk'])
-        self.check_object_permissions(self.request, obj)
-        return obj
 
-    def perform_update(self, serializer):
-        serializer.save()
-        return redirect('review-articles')
 
 '''articles/rejected'''
 '''Выводит список отклоненных статей'''
 class RejectArticlesList(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    queryset = Article.objects.filter(status='rejected')
     serializer_class = BaseArticleSerializer
+
+
+    def get_queryset(self):
+        clean_rejected_articles() #удаляет отклоненную статью, через 5 дней
+        return Article.objects.filter(status='rejected')
 
 
 '''articles/publishing '''
