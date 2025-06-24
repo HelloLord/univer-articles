@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
+
 from .models import Category, Article, CustomUser
 
 """CREATE USER"""
@@ -78,8 +80,8 @@ class OnlyArticleSerializer(serializers.ModelSerializer):
 """Базовый сериализатор, реализует поля Article и поля вложенных объектов сериализаторов"""
 '''articles/' | 'articles/review | /articles/publish'''
 class BaseArticleSerializer(serializers.ModelSerializer):
-    authors = AuthorSerializer(many=True,read_only=True)
-    reviewers = ReviewerSerializer(many=True,read_only=True)
+    authors = AuthorSerializer(many=True)
+    reviewers = ReviewerSerializer(many=True)
     class Meta:
         model = Article
         fields = [
@@ -119,7 +121,7 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 '''Реализует рецензирование статьи'''
 '''рецензентом может быть как авторизированный пользователь'''
 '''так и возможность выбрать самому из списка'''
-class ArticleReviewSerializer(BaseArticleSerializer):
+class ArticleReviewSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True, read_only=True)
 
     category = serializers.PrimaryKeyRelatedField(
@@ -130,8 +132,9 @@ class ArticleReviewSerializer(BaseArticleSerializer):
         queryset=CustomUser.objects.all(),
         many = True
     )
-    class Meta(BaseArticleSerializer.Meta):
-        fields = BaseArticleSerializer.Meta.fields + ['reviewers']
+    class Meta:
+        model = Article
+        fields = '__all__'
         read_only_fields = ['is_published','status']
 
     def update(self, instance, validated_data):
@@ -147,8 +150,11 @@ class ArticleReviewSerializer(BaseArticleSerializer):
 '''Добавляет статью is_published=True'''
 '''Реализует публикацию статьи, которая прошла рецензирование'''
 '''/articles/publish/<int:pk>'''
-class ArticlePublishSerializer(BaseArticleSerializer):
-    class Meta(BaseArticleSerializer.Meta):
+class ArticlePublishSerializer(serializers.ModelSerializer):
+    author = AuthorSerializer(many=True,read_only=True)
+    reviewers = ReviewerSerializer(many=True,read_only=True)
+    class Meta:
+        model = Article
         fields = '__all__'
         read_only_fields = [
             'id', 'title', 'abstract', 'content', 'keywords',

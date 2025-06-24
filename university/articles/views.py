@@ -1,3 +1,6 @@
+from audioop import reverse
+
+from django.http import HttpResponseBase, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -64,21 +67,6 @@ class ArticleCreateView(generics.CreateAPIView):
     serializer_class = ArticleCreateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({"request": self.request})
-        return context
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        article = serializer.save()
-
-        detail_serializer = BaseArticleSerializer(article)
-        return Response(detail_serializer.data)
-
-
-
 
 '''articles/review'''
 '''Выводит список статей, которые поданы на рецензирование '''
@@ -86,6 +74,7 @@ class ReviewArticleView(generics.ListAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Article.objects.filter(status='submitted')
     serializer_class = BaseArticleSerializer
+
 
 ''''articles/review<int:pk>'''
 '''Рецензирование конкретной статьи по ID '''
@@ -104,6 +93,9 @@ class ReviewArticleByIDView(generics.RetrieveUpdateAPIView):
 
     def perform_update(self, serializer):
         serializer.save()
+        return redirect('review-articles')
+
+
 
 
 
