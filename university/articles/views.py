@@ -7,10 +7,11 @@ from django.views import View
 from rest_framework.views import APIView
 from .utils import clean_rejected_articles
 
-from .models import Article, CustomUser
+from .models import Article, CustomUser, ArticleRating
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
                           UserViewSerializer, ArticleCreateSerializer,
-                          ArticleViewByPKSerializer, ArticleReviewSerializer, ArticlePublishSerializer)
+                          ArticleViewByPKSerializer, ArticleReviewSerializer, ArticlePublishSerializer,
+                          )
 
 '''register/'''
 class RegisterView(generics.CreateAPIView):
@@ -48,8 +49,6 @@ class LogoutView(View):
 
 
 
-
-
 '''articles/ '''
 '''Выводит список статей, которые уже прошли рецензию и опубликованы '''
 class ArticleListView(generics.ListAPIView):
@@ -58,6 +57,15 @@ class ArticleListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Article.objects.filter(status = 'published')
+
+'''Выводит определенную статью по ID'''
+'''articles/<int:pk>'''
+class ArticleDetailView(generics.RetrieveAPIView):
+    serializer_class = BaseArticleSerializer
+
+    def get_queryset(self):
+        return Article.objects.filter(status = 'published')
+
 
 '''articles/create'''
 '''Публиковать могут только авторизированные пользователи'''

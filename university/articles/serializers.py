@@ -1,8 +1,9 @@
 from time import timezone
 
+from django.db.models import Avg
 from rest_framework import serializers
 
-from .models import Category, Article, CustomUser
+from .models import Category, Article, CustomUser, ArticleRating
 
 """CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -78,19 +79,45 @@ class OnlyArticleSerializer(serializers.ModelSerializer):
         fields = ['id', 'title']
 
 
+
 """Базовый сериализатор, реализует поля Article и поля вложенных объектов сериализаторов"""
 '''articles/' | 'articles/review | /articles/publish'''
 class BaseArticleSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True)
     reviewers = ReviewerSerializer(many=True)
+
+    average_rating = serializers.SerializerMethodField()
+    user_rating = serializers.SerializerMethodField()
+    can_rate = serializers.SerializerMethodField()
+
     class Meta:
         model = Article
         fields = [
             'id', 'title', 'authors', 'abstract', 'keywords', 'content',
             'submission_date','updated_date', 'status', 'reviewers', 'category', 'is_published',
+            'average_rating', 'user_rating', 'can_rate'
 
         ]
-        read_only_fields = ['submission_date','status']
+
+        read_only_fields = ['submission_date', 'status', 'can_rate']
+
+    def get_average_rating(self, obj):
+        avg = obj.rating.aggregate(Avg('rating'))['rating__avg']
+        return round(avg, 2) if avg else None
+
+    def get_user_rating(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            rating = obj.rating.filter(user=request.user).first()  # Используем 'ratings'
+            return rating.rating if rating else None
+        return None
+
+    def get_can_rate(self, obj):
+        request = self.context.get('request')
+        return (request and request.user.is_authenticated
+                and not obj.rating.filter(user=request.user).exists())
+
+
 
 
 '''Реализует создание статьи с учетом текущего авторизированного пользователя'''
@@ -189,9 +216,11 @@ class ArticleViewByPKSerializer(serializers.ModelSerializer):
 '''users/'''
 '''Показывает зарегистрированных пользователей и их статьи'''
 class UserViewSerializer(serializers.ModelSerializer):
+    article_count = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
-        fields = ['id','username', 'first_name', 'last_name', 'articles', 'article_count']
+        fields = ['id','username', 'first_name', 'last_name', 'articles','article_count']
 
     def get_article_count(self,obj):
         return obj.articles.count()
