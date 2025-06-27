@@ -6,6 +6,8 @@ from django.contrib.auth import logout,authenticate,login
 from django.views import View
 from rest_framework.views import APIView
 from .utils import clean_rejected_articles
+from rest_framework import filters
+from django_filters import rest_framework as django_filters
 
 from .models import Article, CustomUser, ArticleRating
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
@@ -54,9 +56,22 @@ class LogoutView(View):
 class ArticleListView(generics.ListAPIView):
     serializer_class = BaseArticleSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [
+        django_filters.DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter
+    ]
+    filterset_fields = ['title', 'category__name']
+    search_fields = ['abstract', 'content']
+    ordering_fields = ['title', 'updated_date', 'views']
+    ordering = ['-updated_date']
 
     def get_queryset(self):
-        return Article.objects.filter(status = 'published')
+        return Article.objects.filter(
+            is_published=True,
+            status='published'
+        ).select_related('category')
+
 
 '''Выводит определенную статью по ID'''
 '''articles/<int:pk>'''

@@ -10,6 +10,10 @@ SECRET_KEY = SECRET_KEY
 
 ALLOWED_HOSTS = []
 
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -18,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
     'articles',
     'rest_framework',
     # 'rest_framework.authtoken',
