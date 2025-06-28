@@ -1,5 +1,6 @@
 from django.shortcuts import redirect
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, serializers
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from django.contrib.auth import logout,authenticate,login
 from django.views import View
@@ -9,11 +10,12 @@ from rest_framework import filters
 from django_filters import rest_framework as django_filters
 from .self_permissions import IsReviewerOrAdmin, IsStuffOrAdmin
 
-from .models import Article, CustomUser
+from .models import Article, CustomUser, ArticleRating
 
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
                           UserViewSerializer, ArticleCreateSerializer,
                           ArticleViewByPKSerializer, ArticleReviewSerializer, ArticlePublishSerializer,
+                          ArticleRatingSerializer,
                           )
 
 """register/"""
@@ -57,7 +59,7 @@ class LogoutView(View):
 
 """
 articles/
-Выводит список опубликованных статей
+Выводит список опубликованных статей + фильтрация
 """
 
 class ArticleListView(generics.ListAPIView):
@@ -132,7 +134,7 @@ class ReviewArticleByIDView(generics.RetrieveUpdateAPIView):
 """
 articles/rejected
 Выводит список отклоненных статей после рецензирования
-(Только для админа и рецензиата)
+(только для рецензиатов и админа)
 """
 
 class RejectArticlesList(generics.ListAPIView):
@@ -171,7 +173,7 @@ class PublishArticleIDView(generics.RetrieveUpdateAPIView):
 
 """
 articles/<int:pk>
-Выводит список вообще всех статей, для всех операий с ними.
+Выводит одну статью для всех операий.
 (Для админа или модераторов)
 """
 class CURDArticlesByPK(generics.RetrieveUpdateDestroyAPIView):
@@ -190,4 +192,25 @@ class UsersArticlesView(generics.ListAPIView):
     queryset = CustomUser.objects.prefetch_related('articles')
     serializer_class = UserViewSerializer
 
+"""
+articles/ratings
+Возможность оценивать статью
+(для авторизированных)
+"""
+class ArticleRatingCreateUpdateView(generics.CreateAPIView, generics.UpdateAPIView):
+    queryset = ArticleRating.objects.all()
+    serializer_class = ArticleRatingSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+    def get_object(self):
+        article_id = self.request.data.get('article')
+        return ArticleRating.objects.get(
+            article_id=article_id,
+            user=self.request.user
+        )

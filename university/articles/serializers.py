@@ -176,7 +176,6 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
 
 
 
-'''Добавляет статью is_published=True'''
 '''Реализует публикацию статьи, которая прошла рецензирование'''
 '''/articles/publish/<int:pk>'''
 class ArticlePublishSerializer(serializers.ModelSerializer):
@@ -208,6 +207,7 @@ class ArticlePublishSerializer(serializers.ModelSerializer):
 
 
 
+
 """CURD ARTICLES BY PK"""
 '''articles/<int:pk>'''
 class ArticleViewByPKSerializer(serializers.ModelSerializer):
@@ -218,7 +218,6 @@ class ArticleViewByPKSerializer(serializers.ModelSerializer):
 
 """Articles posted by Users"""
 '''users/'''
-'''Показывает зарегистрированных пользователей '''
 class UserViewSerializer(serializers.ModelSerializer):
     article_count = serializers.SerializerMethodField()
 
@@ -230,6 +229,18 @@ class UserViewSerializer(serializers.ModelSerializer):
         return obj.articles.count()
 
 
+"""
+articles/ratings
+Оценка статьи
+"""
+class ArticleRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArticleRating
+        fields = ['id', 'article', 'user', 'rating']
+        read_only_fields = ['user']
 
-
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5")
+        return value
 
