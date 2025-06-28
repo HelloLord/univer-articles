@@ -12,7 +12,7 @@ from .views import (ArticleCreateView,
 
 
 def home_redirect(request):
-    return redirect('articles')
+    return redirect('articles/')
 
 urlpatterns = [
     path('', home_redirect,),
