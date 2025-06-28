@@ -8,8 +8,10 @@ from rest_framework.views import APIView
 from .utils import clean_rejected_articles
 from rest_framework import filters
 from django_filters import rest_framework as django_filters
+from .self_permissions import IsReviewerOrAdmin
 
-from .models import Article, CustomUser, ArticleRating
+from .models import Article, CustomUser
+
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
                           UserViewSerializer, ArticleCreateSerializer,
                           ArticleViewByPKSerializer, ArticleReviewSerializer, ArticlePublishSerializer,
@@ -51,11 +53,13 @@ class LogoutView(View):
 
 
 
-'''articles/ '''
+'''articles'''
 '''Выводит список статей, которые уже прошли рецензию и опубликованы '''
+'''Возможна фильтрация'''
 class ArticleListView(generics.ListAPIView):
     serializer_class = BaseArticleSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]
+
     filter_backends = [
         django_filters.DjangoFilterBackend,
         filters.SearchFilter,
@@ -77,6 +81,7 @@ class ArticleListView(generics.ListAPIView):
 '''articles/<int:pk>'''
 class ArticleDetailView(generics.RetrieveAPIView):
     serializer_class = BaseArticleSerializer
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         return Article.objects.filter(status = 'published')
@@ -92,15 +97,16 @@ class ArticleCreateView(generics.CreateAPIView):
 '''articles/review'''
 '''Выводит список статей, которые поданы на рецензирование '''
 class ReviewArticleView(generics.ListAPIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
-    queryset = Article.objects.filter(status='submitted')
+    permission_classes = [IsReviewerOrAdmin]
     serializer_class = BaseArticleSerializer
 
+    def get_queryset(self):
+        return Article.objects.filter(status='submitted').order_by('-updated_date')
 
 ''''articles/review<int:pk>'''
 '''Рецензирование конкретной статьи по ID '''
 class ReviewArticleByIDView(generics.RetrieveUpdateAPIView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsReviewerOrAdmin]
     serializer_class = ArticleReviewSerializer
 
     def get_queryset(self):
@@ -117,15 +123,19 @@ class RejectArticlesList(generics.ListAPIView):
 
     def get_queryset(self):
         clean_rejected_articles() #удаляет отклоненную статью, через 5 дней
-        return Article.objects.filter(status='rejected')
+        return Article.objects.filter(status='rejected').order_by('-updated_date')
+
+
 
 
 '''articles/publishing '''
 '''Выводит список статей готовых к публикации'''
 class PublishArticleView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    queryset = Article.objects.filter(status='under_review')
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = BaseArticleSerializer
+
+    def get_queryset(self):
+        return Article.objects.filter(status='under_review').order_by('-updated_date')
 
 '''articles/publishing/<int:pk>'''
 '''Публикация конкретной статьи по ID'''

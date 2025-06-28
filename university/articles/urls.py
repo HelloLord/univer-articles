@@ -12,14 +12,14 @@ from .views import (ArticleCreateView,
 
 
 def home_redirect(request):
-    return redirect('articles/')
+    return redirect('articles')
 
 urlpatterns = [
     path('', home_redirect,),
     #register user, login, logout
-    path('register/', RegisterView.as_view(), name='register'),
-    path('logout/', LogoutView.as_view(), name ='logout'),
-    path('login/', LoginAPIView.as_view(), name='login'),
+    path('register', RegisterView.as_view(), name='register'),
+    path('logout', LogoutView.as_view(), name ='logout'),
+    path('login', LoginAPIView.as_view(), name='login'),
 
     #create, view, view detail published
     path('articles/', ArticleListView.as_view(), name='article-list'),
@@ -42,7 +42,7 @@ urlpatterns = [
 
     path('articles/<int:pk>', CURDArticlesByPK.as_view(), ),
     # users with article
-    path('users/', UsersArticlesView.as_view(), name='users-list'),
+    path('users', UsersArticlesView.as_view(), name='users-list'),
 
 
 ]

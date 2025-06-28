@@ -108,7 +108,7 @@ class BaseArticleSerializer(serializers.ModelSerializer):
     def get_user_rating(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            rating = obj.rating.filter(user=request.user).first()  # Используем 'ratings'
+            rating = obj.rating.filter(user=request.user).first()
             return rating.rating if rating else None
         return None
 
@@ -116,7 +116,6 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return (request and request.user.is_authenticated
                 and not obj.rating.filter(user=request.user).exists())
-
 
 
 
@@ -157,7 +156,7 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
         required=False
     )
     reviewers = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.all(),
+        queryset=CustomUser.objects.filter(reviewer = True),
         many = True
     )
     STATUS_CHOICES = [
@@ -165,6 +164,7 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
         ('rejected', 'Отклонена'),
     ]
     status = serializers.ChoiceField(choices=STATUS_CHOICES)
+
     class Meta:
         model = Article
         fields = '__all__'
@@ -214,16 +214,18 @@ class ArticleViewByPKSerializer(serializers.ModelSerializer):
 
 """Articles posted by Users srlz.04"""
 '''users/'''
-'''Показывает зарегистрированных пользователей и их статьи'''
+'''Показывает зарегистрированных пользователей '''
 class UserViewSerializer(serializers.ModelSerializer):
     article_count = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
-        fields = ['id','username', 'first_name', 'last_name', 'articles','article_count']
+        fields = ['id','username', 'first_name', 'last_name', 'articles','article_count','reviewer']
 
     def get_article_count(self,obj):
         return obj.articles.count()
+
+
 
 
 
