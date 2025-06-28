@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from .utils import clean_rejected_articles
 from rest_framework import filters
 from django_filters import rest_framework as django_filters
-from .self_permissions import IsReviewerOrAdmin
+from .self_permissions import IsReviewerOrAdmin, IsStuffOrAdmin
 
 from .models import Article, CustomUser
 
@@ -34,6 +34,7 @@ class RegisterView(generics.CreateAPIView):
 
 '''login/'''
 class LoginAPIView(APIView):
+
     def post(self,request):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -47,6 +48,7 @@ class LoginAPIView(APIView):
 
 '''logout/'''
 class LogoutView(View):
+
     def get(self,request):
         logout(request)
         return redirect('article-list')
@@ -117,9 +119,8 @@ class ReviewArticleByIDView(generics.RetrieveUpdateAPIView):
 '''articles/rejected'''
 '''Выводит список отклоненных статей'''
 class RejectArticlesList(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsReviewerOrAdmin]
     serializer_class = BaseArticleSerializer
-
 
     def get_queryset(self):
         clean_rejected_articles() #удаляет отклоненную статью, через 5 дней
@@ -131,7 +132,7 @@ class RejectArticlesList(generics.ListAPIView):
 '''articles/publishing '''
 '''Выводит список статей готовых к публикации'''
 class PublishArticleView(generics.ListAPIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStuffOrAdmin]
     serializer_class = BaseArticleSerializer
 
     def get_queryset(self):
@@ -140,20 +141,21 @@ class PublishArticleView(generics.ListAPIView):
 '''articles/publishing/<int:pk>'''
 '''Публикация конкретной статьи по ID'''
 class PublishArticleIDView(generics.RetrieveUpdateAPIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStuffOrAdmin]
     queryset = Article.objects.filter(status='under_review')
     serializer_class = ArticlePublishSerializer
 
 
 '''articles/<int:pk>'''
 class CURDArticlesByPK(generics.RetrieveUpdateDestroyAPIView):
-        permission_classes = [IsAuthenticatedOrReadOnly]
+        permission_classes = [IsStuffOrAdmin]
         queryset = Article.objects.all()
         serializer_class = ArticleViewByPKSerializer
 
 """Articles POST by Users srlz.04"""
 '''users/'''
 class UsersArticlesView(generics.ListAPIView):
+    permission_classes = [IsStuffOrAdmin]
     queryset = CustomUser.objects.prefetch_related('articles')
     serializer_class = UserViewSerializer
 

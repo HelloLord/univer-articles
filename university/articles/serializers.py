@@ -1,5 +1,3 @@
-from time import timezone
-
 from django.db.models import Avg
 from rest_framework import serializers
 
@@ -60,12 +58,10 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name']
 
-
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['username', 'first_name', 'last_name']
-
 
 class ReviewerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -118,7 +114,7 @@ class BaseArticleSerializer(serializers.ModelSerializer):
                 and not obj.rating.filter(user=request.user).exists())
 
 
-
+'''articles/create'''
 '''Реализует создание статьи с учетом текущего авторизированного пользователя'''
 class ArticleCreateSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
@@ -186,25 +182,33 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
 class ArticlePublishSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(many=True,read_only=True)
     reviewers = ReviewerSerializer(many=True,read_only=True)
+
+    STATUS_CHOICES = [
+        ('published', 'Опубликовать'),
+        ('rejected', 'Отклонить')]
+
+    status = serializers.ChoiceField(choices=STATUS_CHOICES)
     class Meta:
         model = Article
         fields = '__all__'
         read_only_fields = [
             'id', 'title', 'abstract', 'content', 'keywords',
-            'submission_date', 'status', 'category', 'authors', 'reviewers',
-            'updated_date'
+            'submission_date', 'category', 'authors', 'reviewers',
+            'updated_date', 'is_published'
         ]
 
     def update(self, instance, validated_data):
-        instance.is_published = validated_data.get('is_published', False)
-        instance.status = 'published'
+        if 'status' in validated_data:
+            instance.status = validated_data['status']
+            instance.is_published = True
+            instance.status = 'published'
         instance.save()
         return instance
 
 
 
 
-"""CURD ARTICLES BY PK srlz.04"""
+"""CURD ARTICLES BY PK"""
 '''articles/<int:pk>'''
 class ArticleViewByPKSerializer(serializers.ModelSerializer):
     class Meta:
@@ -212,7 +216,7 @@ class ArticleViewByPKSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-"""Articles posted by Users srlz.04"""
+"""Articles posted by Users"""
 '''users/'''
 '''Показывает зарегистрированных пользователей '''
 class UserViewSerializer(serializers.ModelSerializer):
