@@ -205,9 +205,6 @@ class ArticlePublishSerializer(serializers.ModelSerializer):
         return instance
 
 
-
-
-
 """CURD ARTICLES BY PK"""
 '''articles/<int:pk>'''
 class ArticleViewByPKSerializer(serializers.ModelSerializer):

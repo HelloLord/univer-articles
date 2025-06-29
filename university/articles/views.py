@@ -177,7 +177,7 @@ class PublishArticleIDView(generics.RetrieveUpdateAPIView):
 
 
 """
-articles/<int:pk>
+articles/admin/<int:pk>
 Выводит одну статью для всех операий.
 (Для админа или модераторов)
 """

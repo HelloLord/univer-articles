@@ -26,6 +26,9 @@ urlpatterns = [
     path('articles/<int:pk>', ArticleDetailView.as_view(), name='article-pk'),
     path('articles/create', ArticleCreateView.as_view(), name='article-create'),
 
+    #curd operations for admin
+    path('articles/admin/<int:pk>', CURDArticlesByPK.as_view(), name='article-curd'),
+
     #review article
     path('articles/review', ReviewArticleView.as_view(),
          name='review-articles'),
@@ -40,9 +43,8 @@ urlpatterns = [
     path('articles/rejected', RejectArticlesList.as_view()),
     path('articles/ratings', ArticleRatingCreateUpdateView.as_view(), name='article-rating'),
 
-    path('articles/curd/<int:pk>', CURDArticlesByPK.as_view(), ),
     # users with article
     path('users', UsersArticlesView.as_view(), name='users-list'),
+    ]
 
 
-]
