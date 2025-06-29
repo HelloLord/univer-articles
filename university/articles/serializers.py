@@ -233,7 +233,7 @@ articles/ratings
 class ArticleRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = ArticleRating
-        fields = ['id', 'article', 'user', 'rating']
+        fields = ['id', 'user', 'rating']
         read_only_fields = ['user']
 
     def validate_rating(self, value):

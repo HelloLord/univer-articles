@@ -1,6 +1,7 @@
 from django.shortcuts import redirect
 from rest_framework import generics, permissions, status, serializers
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import logout,authenticate,login
 from django.views import View
@@ -95,6 +96,21 @@ class ArticleDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Article.objects.filter(status = 'published')
+"""
+articles/<int:pk>/rating
+Оценка статьи по ID
+(только для авторизированных пользователей)
+"""
+class ArticleRatingView(generics.CreateAPIView):
+    serializer_class = ArticleRatingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        article = generics.get_object_or_404(Article, pk=self.kwargs.get('pk'))
+        serializer.save(user=self.request.user, article=article)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request,*args,**kwargs)
 
 
 """
@@ -198,39 +214,3 @@ class UsersArticlesView(generics.ListAPIView):
     queryset = CustomUser.objects.prefetch_related('articles')
     serializer_class = UserViewSerializer
 
-"""
-articles/ratings
-Возможность оценивать статью
-(для авторизированных)
-"""
-class ArticleRatingCreateUpdateView(generics.CreateAPIView, generics.UpdateAPIView):
-    queryset = ArticleRating.objects.all()
-    serializer_class = ArticleRatingSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        if ArticleRating.objects.filter(
-            article = serializer.validated_data['article'],
-            user = self.request.user
-        ).exists():
-            raise PermissionDenied("You already rate this article")
-
-        serializer.save(user=self.request.user)
-
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        if instance.user != self.request.user:
-            raise PermissionDenied("You can only update your own ratings")
-        serializer.save()
-
-    def get_object(self):
-        article_id = self.request.data.get('article')
-        if not article_id:
-            raise serializers.ValidationError("Article ID is required")
-        try:
-            return ArticleRating.objects.get(
-            article_id=article_id,
-            user=self.request.user
-        )
-        except ArticleRating.DoesNotExist:
-            raise PermissionDenied("You haven't rated this article")

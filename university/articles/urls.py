@@ -8,7 +8,7 @@ from .views import (ArticleCreateView,
                     CURDArticlesByPK, ReviewArticleByIDView,
                     ReviewArticleView, PublishArticleView,
                     PublishArticleIDView, ArticleListView,
-                    RejectArticlesList, ArticleDetailView, ArticleRatingCreateUpdateView)
+                    RejectArticlesList, ArticleDetailView, ArticleRatingView, )
 
 
 def home_redirect(request):
@@ -24,6 +24,7 @@ urlpatterns = [
     #create, view, view detail published
     path('articles/', ArticleListView.as_view(), name='article-list'),
     path('articles/<int:pk>', ArticleDetailView.as_view(), name='article-pk'),
+    path('articles/<int:pk>/rating', ArticleRatingView.as_view(), name ='article-rate'),
     path('articles/create', ArticleCreateView.as_view(), name='article-create'),
 
     #curd operations for admin
@@ -41,7 +42,7 @@ urlpatterns = [
 
     #list of rejected articles
     path('articles/rejected', RejectArticlesList.as_view()),
-    path('articles/ratings', ArticleRatingCreateUpdateView.as_view(), name='article-rating'),
+    # path('articles/ratings', ArticleRatingCreateUpdateView.as_view(), name='article-rating'),
 
     # users with article
     path('users', UsersArticlesView.as_view(), name='users-list'),
