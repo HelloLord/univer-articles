@@ -85,7 +85,6 @@ class ArticleListView(generics.ListAPIView):
             status='published'
         ).select_related('category')
 
-
 """
 articles/<int:pk>
 Выводит конкретную статью по ID
@@ -96,6 +95,7 @@ class ArticleDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Article.objects.filter(status = 'published')
+
 """
 articles/<int:pk>/rating
 Оценка статьи по ID
@@ -111,7 +111,6 @@ class ArticleRatingView(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         return self.create(request,*args,**kwargs)
-
 
 """
 articles/create

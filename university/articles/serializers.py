@@ -213,8 +213,9 @@ class ArticleViewByPKSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-"""Articles posted by Users"""
-'''users/'''
+"""
+articles/users
+"""
 class UserViewSerializer(serializers.ModelSerializer):
     article_count = serializers.SerializerMethodField()
 

@@ -1,5 +1,7 @@
 from pathlib import Path
 from .secrets import SECRET_KEY
+import os
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,7 +26,6 @@ INSTALLED_APPS = [
     'django_filters',
     'articles',
     'rest_framework',
-    # 'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -37,11 +38,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'rest_framework.authentication.TokenAuthentication',
-#     ],
-# }
 
 ROOT_URLCONF = 'university.urls'
 
@@ -64,17 +60,17 @@ WSGI_APPLICATION = 'university.wsgi.application'
 
 AUTH_USER_MODEL = 'articles.CustomUser'
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
+load_dotenv()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'articles',
-        'USER': 'postgres',
-        'PASSWORD': 'black1337',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
