@@ -142,7 +142,7 @@ class RejectArticlesList(generics.ListAPIView):
     serializer_class = BaseArticleSerializer
 
     def get_queryset(self):
-        # удаляет отклоненную статью, через 5 дней
+        # удаляет отклоненную статью, через 1 день
         clean_rejected_articles()
         return Article.objects.filter(status='rejected').order_by('-updated_date')
 
@@ -203,14 +203,28 @@ class ArticleRatingCreateUpdateView(generics.CreateAPIView, generics.UpdateAPIVi
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
+        if ArticleRating.objects.filter(
+            article = serializer.validated_data['article'],
+            user = self.request.user
+        ).exists():
+            raise PermissionDenied("You already rate this article")
+
         serializer.save(user=self.request.user)
 
     def perform_update(self, serializer):
+        instance = self.get_object()
+        if instance.user != self.request.user:
+            raise PermissionDenied("You can only update your own ratings")
         serializer.save()
 
     def get_object(self):
         article_id = self.request.data.get('article')
-        return ArticleRating.objects.get(
+        if not article_id:
+            raise serializers.ValidationError("Article ID is required")
+        try:
+            return ArticleRating.objects.get(
             article_id=article_id,
             user=self.request.user
         )
+        except ArticleRating.DoesNotExist:
+            raise PermissionDenied("You haven't rated this article")
