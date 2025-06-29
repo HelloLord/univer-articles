@@ -9,6 +9,7 @@ from .utils import clean_rejected_articles
 from rest_framework import filters
 from django_filters import rest_framework as django_filters
 from .self_permissions import IsReviewerOrAdmin, IsStuffOrAdmin
+from .pagination import LargeSetPagination,SmallSetPagination
 
 from .models import Article, CustomUser, ArticleRating
 
@@ -65,6 +66,7 @@ articles/
 class ArticleListView(generics.ListAPIView):
     serializer_class = BaseArticleSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = SmallSetPagination
 
     filter_backends = [
         django_filters.DjangoFilterBackend,
@@ -113,6 +115,7 @@ articles/review
 class ReviewArticleView(generics.ListAPIView):
     permission_classes = [IsReviewerOrAdmin]
     serializer_class = BaseArticleSerializer
+    pagination_class = SmallSetPagination
 
     def get_queryset(self):
         return Article.objects.filter(status='submitted').order_by('-updated_date')
@@ -140,6 +143,7 @@ articles/rejected
 class RejectArticlesList(generics.ListAPIView):
     permission_classes = [IsReviewerOrAdmin]
     serializer_class = BaseArticleSerializer
+    pagination_class = SmallSetPagination
 
     def get_queryset(self):
         # удаляет отклоненную статью, через 1 день
@@ -155,6 +159,7 @@ articles/publishing
 class PublishArticleView(generics.ListAPIView):
     permission_classes = [IsStuffOrAdmin]
     serializer_class = BaseArticleSerializer
+    pagination_class = SmallSetPagination
 
     def get_queryset(self):
         return Article.objects.filter(status='under_review').order_by('-updated_date')
@@ -188,6 +193,7 @@ articles/users
 (Для админа или модераторов)
 """
 class UsersArticlesView(generics.ListAPIView):
+    pagination_class = LargeSetPagination
     permission_classes = [IsStuffOrAdmin]
     queryset = CustomUser.objects.prefetch_related('articles')
     serializer_class = UserViewSerializer
