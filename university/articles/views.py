@@ -1,7 +1,7 @@
+from django.db.models import Count, Avg
 from django.shortcuts import redirect
-from rest_framework import generics, permissions, status, serializers
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework import generics, permissions, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import logout,authenticate,login
 from django.views import View
@@ -9,15 +9,19 @@ from rest_framework.views import APIView
 from .utils import clean_rejected_articles
 from rest_framework import filters
 from django_filters import rest_framework as django_filters
+
+from .view_tracking import track_article_view
+
 from .self_permissions import IsReviewerOrAdmin, IsStuffOrAdmin
+
 from .pagination import LargeSetPagination,SmallSetPagination
 
-from .models import Article, CustomUser, ArticleRating
+from .models import Article, CustomUser, UserViewHistory
 
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
                           UserViewSerializer, ArticleCreateSerializer,
                           ArticleViewByPKSerializer, ArticleReviewSerializer, ArticlePublishSerializer,
-                          ArticleRatingSerializer,
+                          ArticleRatingSerializer, UserHistorySerializer
                           )
 
 """register/"""
@@ -60,6 +64,42 @@ class LogoutView(View):
 
 
 """
+articles/rec
+Выводит список рекомендаций, для авторизированного пользователя.
+"""
+class ArticleRecommendationView(generics.ListAPIView):
+    serializer_class = BaseArticleSerializer
+
+    def get_queryset(self):
+        user = self.request.user       #Получаем текущего пользователя (который делает запрос к API)
+
+        viewed_categories = UserViewHistory.objects.filter(user=user   #Фильтруем историю просмотров статей пользователя
+        ).values('article__category'        #Получаем значения статей, которые пользователь просмотртвал
+        ).annotate(count=Count('article__category')     #Присваиваем каждому значению, колличество просмотров категории
+                              ).order_by('-count')[:3]        #сортируем результаты просмотров по убыванию
+                                                                #берм первые три категории
+        category_ids = []
+        for item in viewed_categories:   #Добавляем ID категории из viewed_categories в пустой список
+            category_ids.append(item['article__category'])
+
+        viewed_article_ids = UserViewHistory.objects.filter(
+            user=user              #Получаем id статей, которые пользователь посмотрел
+        ).values_list('article_id', flat=True)          #получаем результаты в виде плоского списка
+
+
+        recommended_articles = Article.objects.filter(
+                    # Получаем статьи, которые находятся в category_ids
+            category_id__in=category_ids
+        ).exclude(  #Исключаем статьи которые пользователь уже просмотривал
+            id__in=viewed_article_ids
+        ).annotate(  #Анотируем статью со средним рейтингом
+            avg_rating=Avg('rating__rating')
+        )
+        recommended_articles = recommended_articles.order_by('-avg_rating')[:10]
+        return recommended_articles
+
+
+"""
 articles/
 Выводит список опубликованных статей + фильтрация
 """
@@ -94,7 +134,15 @@ class ArticleDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        return Article.objects.filter(status = 'published')
+        return Article.objects.filter(status='published')
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request,*args,**kwargs)
+        article = self.get_object()
+        track_article_view(request.user, article)
+
+        return response
+
 
 """
 articles/<int:pk>/rating
@@ -213,3 +261,10 @@ class UsersArticlesView(generics.ListAPIView):
     queryset = CustomUser.objects.prefetch_related('articles')
     serializer_class = UserViewSerializer
 
+
+
+
+"""TEST"""
+class UserViewHistory(generics.ListAPIView):
+    serializer_class = UserHistorySerializer
+    queryset = UserViewHistory.objects.all()

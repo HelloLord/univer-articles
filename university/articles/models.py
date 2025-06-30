@@ -9,14 +9,10 @@ class CustomUser(AbstractUser):
     birth_date = models.DateField(blank=True, null=True)
     reviewer = models.BooleanField(default=False)
 
-    def __str__(self):
-        return self.username
 
 class Category(models.Model):
     name = models.CharField(max_length=200)
 
-    def __str__(self):
-        return self.name
 
 class Article(models.Model):
     STATUS_CHOICES = [
@@ -39,9 +35,6 @@ class Article(models.Model):
     is_published = models.BooleanField(default=False)
 
 
-    def __str__(self):
-        return self.title
-
 class ArticleRating(models.Model):
     article = models.ForeignKey(Article,
                                 on_delete=models.CASCADE,
@@ -54,8 +47,9 @@ class ArticleRating(models.Model):
     class Meta:
         unique_together = ('article', 'user')
 
-    def __str__(self):
-        return f"rated {self.article} with {self.rating}"
-
+class UserViewHistory(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    viewed_at = models.DateTimeField(auto_now_add=True)
 
 

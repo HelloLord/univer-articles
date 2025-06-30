@@ -1,7 +1,7 @@
 from django.db.models import Avg
 from rest_framework import serializers
 
-from .models import Category, Article, CustomUser, ArticleRating
+from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
 
 """CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -81,17 +81,19 @@ class OnlyArticleSerializer(serializers.ModelSerializer):
 class BaseArticleSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True)
     reviewers = ReviewerSerializer(many=True)
+    category = CategorySerializer(read_only=True)
 
     average_rating = serializers.SerializerMethodField()
     user_rating = serializers.SerializerMethodField()
     can_rate = serializers.SerializerMethodField()
+    views = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = [
             'id', 'title', 'authors', 'abstract', 'keywords', 'content',
             'submission_date','updated_date', 'status', 'reviewers', 'category', 'is_published',
-            'average_rating', 'user_rating', 'can_rate'
+            'average_rating', 'user_rating', 'can_rate', 'views'
 
         ]
 
@@ -112,6 +114,11 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return (request and request.user.is_authenticated
                 and not obj.rating.filter(user=request.user).exists())
+
+    #метод подсчета просмотров статьи
+    def get_views(self,obj):
+        return UserViewHistory.objects.filter(article=obj).count()
+
 
 
 '''articles/create'''
@@ -242,3 +249,10 @@ class ArticleRatingSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Rating must be between 1 and 5")
         return value
 
+
+
+"""TEST"""
+class UserHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserViewHistory
+        fields = ['user', 'article', 'viewed_at']
