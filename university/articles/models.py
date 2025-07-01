@@ -13,6 +13,8 @@ class CustomUser(AbstractUser):
 class Category(models.Model):
     name = models.CharField(max_length=200)
 
+    def __str__(self):
+        return self.name
 
 class Article(models.Model):
     STATUS_CHOICES = [
@@ -33,6 +35,7 @@ class Article(models.Model):
     reviewers = models.ManyToManyField(CustomUser, related_name='reviews', blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     is_published = models.BooleanField(default=False)
+    pdf_file = models.FileField(upload_to='articles/pdfs', null=True, blank=True)
 
 
 class ArticleRating(models.Model):
@@ -51,5 +54,9 @@ class UserViewHistory(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     viewed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} viewed {self.article.title}"
+
 
 

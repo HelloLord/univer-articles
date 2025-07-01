@@ -6,11 +6,12 @@ from rest_framework.response import Response
 from django.contrib.auth import logout,authenticate,login
 from django.views import View
 from rest_framework.views import APIView
-from .utils import clean_rejected_articles
 from rest_framework import filters
 from django_filters import rest_framework as django_filters
 
 from .view_tracking import track_article_view
+
+from .utils import clean_rejected_articles,extract_pdf
 
 from .self_permissions import IsReviewerOrAdmin, IsStuffOrAdmin
 
@@ -21,7 +22,7 @@ from .models import Article, CustomUser, UserViewHistory
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
                           UserViewSerializer, ArticleCreateSerializer,
                           ArticleViewByPKSerializer, ArticleReviewSerializer, ArticlePublishSerializer,
-                          ArticleRatingSerializer, UserHistorySerializer
+                          ArticleRatingSerializer
                           )
 
 """register/"""
@@ -145,7 +146,7 @@ class ArticleDetailView(generics.RetrieveAPIView):
 
 
 """
-articles/<int:pk>/rating
+articles/<int:pk>/ratin
 Оценка статьи по ID
 (только для авторизированных пользователей)
 """
@@ -163,11 +164,29 @@ class ArticleRatingView(generics.CreateAPIView):
 """
 articles/create
 Служит для создания новой статьи
+Возможность загрузки сататьи в формете PDF 
 (только для авторизированных пользователей)
 """
 class ArticleCreateView(generics.CreateAPIView):
     serializer_class = ArticleCreateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        pdf_file = request.FILES.get('pdf_file')
+        if pdf_file:
+            try:
+                content = extract_pdf(pdf_file)
+                serializer.validated_data['content'] = content
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 """
@@ -264,7 +283,3 @@ class UsersArticlesView(generics.ListAPIView):
 
 
 
-"""TEST"""
-class UserViewHistory(generics.ListAPIView):
-    serializer_class = UserHistorySerializer
-    queryset = UserViewHistory.objects.all()

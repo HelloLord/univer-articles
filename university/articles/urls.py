@@ -25,7 +25,9 @@ urlpatterns = [
     #create, view, view detail published
     path('articles/', ArticleListView.as_view(), name='article-list'),
     path('articles/<int:pk>', ArticleDetailView.as_view(), name='article-pk'),
+
     path('articles/<int:pk>/rating', ArticleRatingView.as_view(), name ='article-rate'),
+
     path('articles/create', ArticleCreateView.as_view(), name='article-create'),
 
     #curd operations for admin
@@ -50,11 +52,6 @@ urlpatterns = [
     # users with article
     path('users', UsersArticlesView.as_view(), name='users-list'),
 
-
-
-
-    #"""TEST"""
-    path('article/view/his', UserViewHistory.as_view(),)
     ]
 
 

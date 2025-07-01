@@ -93,7 +93,7 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'authors', 'abstract', 'keywords', 'content',
             'submission_date','updated_date', 'status', 'reviewers', 'category', 'is_published',
-            'average_rating', 'user_rating', 'can_rate', 'views'
+            'average_rating', 'user_rating', 'can_rate', 'views', 'pdf_file'
 
         ]
 
@@ -129,20 +129,27 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         model = Article
         fields = ['id', 'title',
                   'abstract', 'content',
-                  'category']
+                  'category','pdf_file']
 
     def create(self,validated_data):
         #Берет за автора, Текущего авторизированного пользователя.
         current_user = self.context['request'].user
-        reviewers = validated_data.pop('reviewers', [])
         category = validated_data.pop('category')
         article = Article.objects.create(**validated_data)
         article.authors.add(current_user)
-        article.reviewers.set(reviewers)
         article.category = category
         article.save()
         return article
 
+        #Проверка на загрузку статьи в PDF формате, либо в формате текста
+    def validate(self, data):
+        if not data.get('content') and not data.get('pdf_file'):
+            raise serializers.ValidationError('Должен быть либо текст статьи либо PDF-файл')
+        if data.get('content') and data.get('pdf_file'):
+            raise serializers.ValidationError('Предоставьте что-то одно, '
+                                               'либо текст статьи либо PDF файл,'
+                                             'но не оба варианта')
+        return data
 
 
 
@@ -171,7 +178,7 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
-        read_only_fields = ['is_published']
+        read_only_fields = ['is_published','pdf_file']
 
     def update(self, instance, validated_data):
         reviewers = validated_data.pop('reviewers', [])
@@ -200,7 +207,7 @@ class ArticlePublishSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'title', 'abstract', 'content', 'keywords',
             'submission_date', 'category', 'authors', 'reviewers',
-            'updated_date', 'is_published'
+            'updated_date', 'is_published','pdf_file'
         ]
 
     def update(self, instance, validated_data):
@@ -250,9 +257,3 @@ class ArticleRatingSerializer(serializers.ModelSerializer):
         return value
 
 
-
-"""TEST"""
-class UserHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserViewHistory
-        fields = ['user', 'article', 'viewed_at']
