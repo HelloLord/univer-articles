@@ -1,4 +1,5 @@
 from django.db.models import Avg
+from django.template.context_processors import request
 from rest_framework import serializers
 
 from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
@@ -130,6 +131,10 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         fields = ['id', 'title',
                   'abstract', 'content',
                   'category','pdf_file']
+        extra_kwargs = {
+            'keywords': {'required': False, 'allow_blank': True},
+            'category': {'required': False, 'allow_null': True}
+        }
 
     def create(self,validated_data):
         #Берет за автора, Текущего авторизированного пользователя.

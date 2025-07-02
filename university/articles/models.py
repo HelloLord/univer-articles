@@ -1,7 +1,13 @@
+from dataclasses import field
 
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator
 from django.db import models
+from django.core.validators import RegexValidator
+from django.utils.translation.trans_null import gettext_lazy
+from pyexpat.errors import messages
+from rest_framework.exceptions import ValidationError
+
 
 class CustomUser(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
@@ -23,8 +29,21 @@ class Article(models.Model):
         ('published', 'Опубликована'),
         ('rejected', 'Отклонена'),
     ]
+    title = models.CharField(
+        max_length=50,
+        error_messages={
+            'max_length': gettext_lazy('Название не может превышать 50 символов.'),
+        },
+        validators=[
+            MinLengthValidator(5, message=gettext_lazy('Название должено содержать минимум 5 символов')),
+            RegexValidator(
+                regex=r'^[^!@#$%^&*()+={}\[\]|\\:;"\'<>?,~`]+$',
+                message="Название содержит запрещенные символы."
+            ),
+        ]
+    )
 
-    title = models.CharField(max_length=100)
+
     authors = models.ManyToManyField(CustomUser, related_name='articles')
     abstract = models.TextField()
     keywords = models.CharField(max_length=200, null=True)
