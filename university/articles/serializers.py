@@ -136,16 +136,6 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
             'category': {'required': False, 'allow_null': True}
         }
 
-    def create(self,validated_data):
-        #Берет за автора, Текущего авторизированного пользователя.
-        current_user = self.context['request'].user
-        category = validated_data.pop('category')
-        article = Article.objects.create(**validated_data)
-        article.authors.add(current_user)
-        article.category = category
-        article.save()
-        return article
-
         #Проверка на загрузку статьи в PDF формате, либо в формате текста
     def validate(self, data):
         if not data.get('content') and not data.get('pdf_file'):
@@ -155,6 +145,18 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
                                                'либо текст статьи либо PDF файл,'
                                              'но не оба варианта')
         return data
+
+    def create(self,validated_data):
+        #Берет за автора, Текущего авторизированного пользователя.
+        current_user = self.context['request'].user
+        category = validated_data.pop('category')
+
+        article = Article.objects.create(**validated_data)
+
+        article.authors.add(current_user)
+        article.category = category
+        article.save()
+        return article
 
 
 
