@@ -39,10 +39,8 @@ class Article(models.Model):
             ),
         ]
     )
-
-
     authors = models.ManyToManyField(CustomUser, related_name='articles')
-    abstract = models.TextField()
+    abstract = models.TextField(null=False)
     keywords = models.CharField(max_length=200, null=True)
     content = models.TextField(blank=True, null=True)
     submission_date = models.DateField(auto_now_add=True)

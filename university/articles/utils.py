@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from celery import shared_task
@@ -41,9 +42,14 @@ def clean_rejected_articles():
 Извлекает текст из PDF файлов.
 """
 def extract_pdf(pdf_file):
-    pdf_reader = PyPDF2.PdfReader(pdf_file)
     text = ""
-    for page in pdf_reader.pages:
-        text += page.extract_text()
+    try:
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        for page in pdf_reader.pages:
+            text += page.extract_text() or ""
+
+    except Exception as e:
+        logging.error(f"Ошибка при извлечении текста из PDF: {e}")
+        return None
     return text
 

@@ -116,7 +116,7 @@ class ArticleListView(generics.ListAPIView):
         filters.OrderingFilter
     ]
     filterset_fields = ['title', 'category__name']
-    search_fields = ['abstract', 'content']
+    search_fields = ['abstract', 'content', 'keywords']
     ordering_fields = ['title', 'updated_date', 'views']
     ordering = ['-updated_date']
 
@@ -174,15 +174,6 @@ class ArticleCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        pdf_file = request.FILES.get('pdf_file')
-        if pdf_file:
-            try:
-                content = extract_pdf(pdf_file)
-                serializer.validated_data['content'] = content
-            except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
         self.perform_create(serializer)
 
         headers = self.get_success_headers(serializer.data)

@@ -2,7 +2,7 @@ from django.db.models import Avg
 from rest_framework import serializers
 
 from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
-from .utils import KeywordExtract
+from .utils import KeywordExtract, extract_pdf
 
 """CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -132,17 +132,47 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
                   'abstract', 'content',
                   'category','pdf_file']
 
+    def validate_pdf_file(self,value):
+        if value:
+            try:
+                content = extract_pdf(value)
+                if len(content.strip()) < 100:
+                    raise serializers.ValidationError('Текст должен быть более 100 символов')
+
+            except Exception as e:
+                raise serializers.ValidationError(
+                    f"Ошибка обработки PDF: {str(e)}"
+                )
+        return value
+
         #Проверка на загрузку статьи в PDF формате, либо в формате текста
     def validate(self, data):
         if not data.get('content') and not data.get('pdf_file'):
             raise serializers.ValidationError('Должен быть либо текст статьи либо PDF-файл')
+
         if data.get('content') and data.get('pdf_file'):
             raise serializers.ValidationError('Предоставьте что-то одно, '
                                                'либо текст статьи либо PDF файл,'
                                              'но не оба варианта')
+        if data.get('content') and len(data['content'].strip()) < 100:
+            raise serializers.ValidationError(
+                'Текст статьи должен содержать не менее 100 символов'
+            )
+
         return data
 
     def create(self,validated_data):
+        pdf_file = validated_data.pop('pdf_file', None)
+
+        if pdf_file:
+            validated_data['content'] = extract_pdf(pdf_file)
+
+        content = validated_data.get('content', '')
+        if len(content.strip()) <100:
+            raise serializers.ValidationError(
+                'Текст должен содержать не менее 100 символов'
+            )
+
         #Берет за автора, Текущего авторизированного пользователя.
         current_user = self.context['request'].user
         category = validated_data.pop('category')
