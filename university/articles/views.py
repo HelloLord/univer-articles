@@ -11,7 +11,7 @@ from django_filters import rest_framework as django_filters
 
 from .view_tracking import track_article_view
 
-from .utils import clean_rejected_articles,extract_pdf
+from .utils import clean_rejected_articles,extract_pdf,KeywordExtract
 
 from .self_permissions import IsReviewerOrAdmin, IsStuffOrAdmin
 

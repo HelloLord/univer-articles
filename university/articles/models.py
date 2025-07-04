@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator
 from django.db import models
 from django.core.validators import RegexValidator
+from django.db.models import SET_NULL
 from django.utils.translation.trans_null import gettext_lazy
 
 
@@ -9,7 +10,7 @@ class CustomUser(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
-    reviewer = models.BooleanField(default=False)
+    is_reviewer = models.BooleanField(default=False)
 
 
 class Category(models.Model):
@@ -47,7 +48,7 @@ class Article(models.Model):
     submission_date = models.DateField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=20, choices = STATUS_CHOICES, default='submitted')
-    reviewers = models.ManyToManyField(CustomUser, related_name='reviews', blank=True)
+    reviewer = models.ForeignKey(CustomUser, related_name='reviewer', blank=True, on_delete=SET_NULL, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     is_published = models.BooleanField(default=False)
     pdf_file = models.FileField(upload_to='articles/pdfs', null=True, blank=True)

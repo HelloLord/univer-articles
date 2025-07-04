@@ -1,8 +1,8 @@
 from django.db.models import Avg
-from django.template.context_processors import request
 from rest_framework import serializers
 
 from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
+from .utils import KeywordExtract
 
 """CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -81,7 +81,7 @@ class OnlyArticleSerializer(serializers.ModelSerializer):
 '''articles/' | 'articles/review | /articles/publish'''
 class BaseArticleSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True)
-    reviewers = ReviewerSerializer(many=True)
+    reviewer = ReviewerSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
 
     average_rating = serializers.SerializerMethodField()
@@ -92,13 +92,13 @@ class BaseArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = [
-            'id', 'title', 'authors', 'abstract', 'keywords', 'content',
-            'submission_date','updated_date', 'status', 'reviewers', 'category', 'is_published',
-            'average_rating', 'user_rating', 'can_rate', 'views', 'pdf_file'
+            'id', 'title', 'authors', 'abstract', 'keywords', 'content','submission_date',
+            'submission_date','updated_date', 'status', 'reviewer', 'category', 'is_published',
+            'average_rating', 'user_rating', 'can_rate', 'views'
 
         ]
 
-        read_only_fields = ['submission_date', 'status', 'can_rate']
+        read_only_fields = [ 'status', 'can_rate']
 
     def get_average_rating(self, obj):
         avg = obj.rating.aggregate(Avg('rating'))['rating__avg']
@@ -131,10 +131,6 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         fields = ['id', 'title',
                   'abstract', 'content',
                   'category','pdf_file']
-        extra_kwargs = {
-            'keywords': {'required': False, 'allow_blank': True},
-            'category': {'required': False, 'allow_null': True}
-        }
 
         #Проверка на загрузку статьи в PDF формате, либо в формате текста
     def validate(self, data):
@@ -151,7 +147,12 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         current_user = self.context['request'].user
         category = validated_data.pop('category')
 
+        content = validated_data.get('content','')
+        keywords = KeywordExtract().extract(content) #извлекаем ключевые слова из поля content
         article = Article.objects.create(**validated_data)
+
+        if hasattr(article,'keywords'):
+            article.keywords = ', '.join(keywords)
 
         article.authors.add(current_user)
         article.category = category
@@ -167,14 +168,9 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 '''реализована возможность отмены статьи'''
 class ArticleReviewSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True, read_only=True)
-
     category = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         required=False
-    )
-    reviewers = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.filter(reviewer = True),
-        many = True
     )
     STATUS_CHOICES = [
         ('under_review', 'Прошла рецензирование'),
@@ -185,13 +181,12 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
-        read_only_fields = ['is_published','pdf_file']
+        read_only_fields = ['is_published','pdf_file','reviewer']
 
     def update(self, instance, validated_data):
-        reviewers = validated_data.pop('reviewers', [])
+        current_user = self.context['request'].user
         instance = super().update(instance, validated_data)
-        instance.reviewers.clear()
-        instance.reviewers.add(*reviewers)
+        instance.reviewer = current_user
         instance.save()
         return instance
 
@@ -201,7 +196,8 @@ class ArticleReviewSerializer(serializers.ModelSerializer):
 '''/articles/publish/<int:pk>'''
 class ArticlePublishSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(many=True,read_only=True)
-    reviewers = ReviewerSerializer(many=True,read_only=True)
+    reviewer = ReviewerSerializer(read_only=True)
+    category = CategorySerializer(read_only=True)
 
     STATUS_CHOICES = [
         ('published', 'Опубликовать'),
@@ -258,9 +254,14 @@ class ArticleRatingSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'rating']
         read_only_fields = ['user']
 
-    def validate_rating(self, value):
-        if value < 1 or value > 5:
-            raise serializers.ValidationError("Rating must be between 1 and 5")
-        return value
+    def validate(self,data):
+        user = self.context['request'].user
+        article = data.get('article')
+        if ArticleRating.objects.filter(user=user, article=article).exists():
+            raise serializers.ValidationError("Вы уже оценили эту статью.")
+        rating = data.get('rating')
+        if rating < 1 or rating > 5:
+            raise serializers.ValidationError('Оценка должна быть от 1 до 5')
+        return data
 
 
