@@ -1,5 +1,7 @@
 import logging
+import os.path
 from datetime import timedelta
+from venv import logger
 
 from celery import shared_task
 from django.utils import timezone
@@ -32,10 +34,28 @@ class KeywordExtract:
 @shared_task
 def clean_rejected_articles():
     expiration_date = timezone.now() - timedelta(days=1)
-    deleted_count, _ = Article.objects.filter(
-        status = 'rejected',
-        updated_date__lte = expiration_date
-    ).delete()
+    rejected_articles = Article.objects.filter(
+        status='rejected',
+        updated_date__lte=expiration_date
+    )
+
+    pdf_file_paths = []
+    for article in rejected_articles:
+        #проверяем на существование pdf_file
+        if hasattr(article, 'pdf_file') and article.pdf_file:
+            pdf_file_paths.append(article.pdf_file.path)
+    deletion_result = rejected_articles.delete()
+
+    deleted_count = deletion_result[0] if isinstance(deletion_result, tuple) else 0
+
+    for pdf_file_path in pdf_file_paths:
+        try:
+            if os.path.exists(pdf_file_path):
+                os.remove(pdf_file_path)
+                logger.info(f"Удален файл: {pdf_file_path}")
+        except Exception as e:
+            logger.error(f"Ошибка при удалении файла {pdf_file_path}: {e}")
+
     return deleted_count
 
 """
