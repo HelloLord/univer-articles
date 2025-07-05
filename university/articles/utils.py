@@ -6,6 +6,7 @@ from celery import shared_task
 from django.utils import timezone
 import PyPDF2
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from yake.core import yake
 
 from .models import Article
@@ -24,7 +25,8 @@ class KeywordExtract:
                 features=None
             )
         except Exception as e:
-            raise ValueError(f"Ошибка при инициализации KeywordExtractor {str(e)}")
+            logger.error(f"Ошибка инициализации KeywordExtract: {str(e)}")
+            raise ValueError(f"Ошибка при инициализации KeywordExtract: {str(e)}")
 
 
     def extract(self, text, top_n=3):
@@ -41,7 +43,7 @@ class KeywordExtract:
             return filtred_keywords[:top_n]
 
         except Exception as e:
-            print(f"Ошибка при извлечении ключевых слов: {str(e)}")
+            logger.error(f"Ошибка при извлечении ключевых слов: {str(e)}")
             return None
 """
 Извлекает текст из PDF файлов.
@@ -62,16 +64,25 @@ class PDFProcessing:
 
     @staticmethod
     def validate_pdf_file(value):
-        if value:
-            content = PDFProcessing.extract_text(value)
-            if content is None:
-                raise serializers.ValidationError('ошибка обработки PDF: '
-                                                  'Файл поврежден или формат файла '
-                                                  'не является PDF ')
-            if len(content.strip()) < 100:
-                raise serializers.ValidationError('Текст должен быть более 100 символов')
-            return content
-        return value
+        if not value:
+            return value
+
+        file_extension = os.path.splitext(value.name)[1].lower() #Получаем формат файла
+        if not value.name.lower().endswith('.pdf'):
+            raise ValidationError(f'Файл должен быть в формате PDF.'
+                                  f'Загруженный файл имеет формат {file_extension}')
+        if value.size == 0:
+            raise ValidationError('Файл не может быть пустым.')
+
+        content = PDFProcessing.extract_text(value)
+        if content is None:
+            raise serializers.ValidationError('ошибка обработки PDF: Файл поврежден')
+
+        if len(content.strip()) < 100:
+            raise serializers.ValidationError('Текст должен быть более 100 символов')
+
+        return content
+
 
 
 
