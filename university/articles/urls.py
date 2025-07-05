@@ -9,7 +9,7 @@ from .views import (ArticleCreateView,
                     ReviewArticleView, PublishArticleView,
                     PublishArticleIDView, ArticleListView,
                     RejectArticlesList, ArticleDetailView, ArticleRatingView,
-                    ArticleRecommendationView, UserViewHistory)
+                    ArticleRecommendationView)
 
 
 def home_redirect(request):

@@ -2,7 +2,7 @@ from django.db.models import Avg
 from rest_framework import serializers
 
 from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
-from .utils import KeywordExtract, extract_pdf
+from .utils import KeywordExtract, PDFProcessing
 
 """CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -17,23 +17,23 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
     def validate_username(self, value):
         if not value:
-            raise serializers.ValidationError("Username is required")
+            raise serializers.ValidationError("Поле username обязательное")
         if not value.isalnum():
-            raise serializers.ValidationError("Username must contain only letters and numbers.")
+            raise serializers.ValidationError("username должен содержать только буквы и цифры")
         if CustomUser.objects.filter(username=value).exists():
-            raise serializers.ValidationError("User with that username already exists.")
+            raise serializers.ValidationError(f"логин: {value} уже занят")
         return value
 
     def validate_email(self,value):
         if not value:
-            raise serializers.ValidationError("Email is required")
+            raise serializers.ValidationError("поле email обязательное")
         if CustomUser.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already exists.")
+            raise serializers.ValidationError(f"аккаунт с {value} уже существует.")
         return value
 
     def validate_phone(self,value):
         if CustomUser.objects.filter(phone=value).exists():
-            raise serializers.ValidationError("Phone already exists.")
+            raise serializers.ValidationError(f"Аккаунт с телефоном {value} уже существует.")
         return value
 
     def create(self, validated_data):
@@ -51,7 +51,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             print("User created:", user.username, user.phone)
             return user
         except Exception as e:
-            raise serializers.ValidationError('Error creating user: '+ str(e))
+            raise serializers.ValidationError('ошибка при регистрации пользователя: '+ str(e))
 
 """Вложенные сериализаторы, реализуют отображения нужных полей в основных объектах"""
 class CategorySerializer(serializers.ModelSerializer):
@@ -133,28 +133,21 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
                   'category','pdf_file']
 
     def validate_pdf_file(self,value):
-        if value:
-            try:
-                content = extract_pdf(value)
-                if len(content.strip()) < 100:
-                    raise serializers.ValidationError('Текст должен быть более 100 символов')
-
-            except Exception as e:
-                raise serializers.ValidationError(
-                    f"Ошибка обработки PDF: {str(e)}"
-                )
-        return value
+        return PDFProcessing.validate_pdf_file(value)
 
         #Проверка на загрузку статьи в PDF формате, либо в формате текста
     def validate(self, data):
-        if not data.get('content') and not data.get('pdf_file'):
+        content = data.get('content')
+        pdf_file = data.get('pdf_file')
+
+        if not content and not pdf_file:
             raise serializers.ValidationError('Должен быть либо текст статьи либо PDF-файл')
 
-        if data.get('content') and data.get('pdf_file'):
+        if content and pdf_file:
             raise serializers.ValidationError('Предоставьте что-то одно, '
                                                'либо текст статьи либо PDF файл,'
                                              'но не оба варианта')
-        if data.get('content') and len(data['content'].strip()) < 100:
+        if content and len(content.strip()) < 100:
             raise serializers.ValidationError(
                 'Текст статьи должен содержать не менее 100 символов'
             )
@@ -163,17 +156,9 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 
     def create(self,validated_data):
         pdf_file = validated_data.pop('pdf_file', None)
-
         if pdf_file:
-            validated_data['content'] = extract_pdf(pdf_file)
+            validated_data['content'] = PDFProcessing.extract_text(pdf_file)
 
-        content = validated_data.get('content', '')
-        if len(content.strip()) <100:
-            raise serializers.ValidationError(
-                'Текст должен содержать не менее 100 символов'
-            )
-
-        #Берет за автора, Текущего авторизированного пользователя.
         current_user = self.context['request'].user
         category = validated_data.pop('category')
 
@@ -181,7 +166,10 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         keywords = KeywordExtract().extract(content) #извлекаем ключевые слова из поля content
         article = Article.objects.create(**validated_data)
 
+        #Возворащаем пустой список если список keywords пуст
         if hasattr(article,'keywords'):
+            if keywords is None:
+                keywords = []
             article.keywords = ', '.join(keywords)
 
         article.authors.add(current_user)
