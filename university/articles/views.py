@@ -35,7 +35,6 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception = True)
         user = serializer.save()
-
         login(request, user)
 
         return redirect('article-list')
@@ -178,6 +177,7 @@ class ArticleCreateView(generics.CreateAPIView):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 
 """

@@ -3,6 +3,7 @@ import os.path
 from datetime import timedelta
 from venv import logger
 from celery import shared_task
+from django.template.context_processors import request
 from django.utils import timezone
 import PyPDF2
 from rest_framework import serializers
@@ -53,7 +54,10 @@ class PDFProcessing:
     def extract_text(pdf_file):
         text = ""
         try:
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            if isinstance(pdf_file,str): #В случае если это просто строка.
+                return pdf_file
+
+            pdf_reader = PyPDF2.PdfReader(pdf_file) #В случае если это файловый объект
             for page in pdf_reader.pages:
                 text += page.extract_text() or ""
 

@@ -1,5 +1,7 @@
 from django.db.models import Avg
+from django.db.models.query_utils import logger
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
 from .utils import KeywordExtract, PDFProcessing
@@ -37,7 +39,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        print("validated data", validated_data)
         try:
             user = CustomUser.objects.create_user(
                 username=validated_data['username'],
@@ -48,9 +49,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
                 phone=validated_data.get('phone', ''),
                 birth_date=validated_data.get('birth_date')
             )
-            print("User created:", user.username, user.phone)
+            logger.info(f"Пользователь создан: {user.username}")
             return user
         except Exception as e:
+            logger.error(f"Ошибка при регистрации пользователя: {str(e)}")
             raise serializers.ValidationError('ошибка при регистрации пользователя: '+ str(e))
 
 """Вложенные сериализаторы, реализуют отображения нужных полей в основных объектах"""
@@ -163,6 +165,9 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         category = validated_data.pop('category')
 
         content = validated_data.get('content','')
+        if not content:
+            raise ValidationError('Поле контент не может быть пустым')
+
         keywords = KeywordExtract().extract(content) #извлекаем ключевые слова из поля content
         article = Article.objects.create(**validated_data)
 
