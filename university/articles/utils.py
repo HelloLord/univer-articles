@@ -1,9 +1,9 @@
 import logging
 import os.path
 from datetime import timedelta
+from typing import Tuple, Optional, List, Union, Any
 from venv import logger
 from celery import shared_task
-from django.template.context_processors import request
 from django.utils import timezone
 import PyPDF2
 from rest_framework import serializers
@@ -16,7 +16,8 @@ from .models import Article
 Извлекает ключевые слова из текста
 """
 class KeywordExtract:
-    def __init__(self, language="ru", ngrams=(1,2), dedup_lim=0.9, top=10):
+    def __init__(self, language: str ="ru", ngrams: Tuple[int, int] = (1,2),
+                 dedup_lim: float =0.9, top: int=10) -> None:
         try:
             self.extractor = yake.KeywordExtractor(
                 lan=language,
@@ -30,12 +31,12 @@ class KeywordExtract:
             raise ValueError(f"Ошибка при инициализации KeywordExtract: {str(e)}")
 
 
-    def extract(self, text, top_n=3):
+    def extract(self, text: str, top_n: int = 3) -> Optional[List[str]]:
         try:
             if not text or not isinstance(text, str):
                 raise ValueError("Файл не может быть пустым")
 
-            keywords = self.extractor.extract_keywords(text)
+            keywords = self.extractor.extract_keywords(text, str)
             filtred_keywords = [kw[0] for kw in keywords if len(kw[0]) <= 20]
 
             if not filtred_keywords:
@@ -51,7 +52,7 @@ class KeywordExtract:
 """
 class PDFProcessing:
     @staticmethod
-    def extract_text(pdf_file):
+    def extract_text(pdf_file: Union[str,Any]) -> Optional[str]:
         text = ""
         try:
             if isinstance(pdf_file,str): #В случае если это просто строка.
@@ -67,7 +68,7 @@ class PDFProcessing:
         return text
 
     @staticmethod
-    def validate_pdf_file(value):
+    def validate_pdf_file(value: Any) -> str:
         if not value:
             return value
 
@@ -78,7 +79,7 @@ class PDFProcessing:
         if value.size == 0:
             raise ValidationError('Файл не может быть пустым.')
 
-        content = PDFProcessing.extract_text(value)
+        content: Optional[str] = PDFProcessing.extract_text(value)
         if content is None:
             raise serializers.ValidationError('ошибка обработки PDF: Файл поврежден')
 
@@ -94,21 +95,22 @@ class PDFProcessing:
 Метод служит для автоудаления отклоненных статей
 """
 @shared_task
-def clean_rejected_articles():
+def clean_rejected_articles() -> int:
     expiration_date = timezone.now() - timedelta(days=1)
     rejected_articles = Article.objects.filter(
         status='rejected',
         updated_date__lte=expiration_date
     )
 
-    pdf_file_paths = []
+    pdf_file_paths: List[str] = []
     for article in rejected_articles:
         #проверяем на существование pdf_file в объекте article
         if hasattr(article, 'pdf_file') and article.pdf_file:
             pdf_file_paths.append(article.pdf_file.path)
-    deletion_result = rejected_articles.delete() #Результат выполнения метода delete
 
-    deleted_count = deletion_result[0] if isinstance(deletion_result, tuple) else 0
+    deletion_result: Tuple[int,dict] = rejected_articles.delete() #Результат выполнения метода delete
+    deleted_count: int = deletion_result[0] if isinstance(deletion_result, tuple) else 0
+
     logger.info(f'Удалено {deleted_count} статей')
 
     for pdf_file_path in pdf_file_paths:
