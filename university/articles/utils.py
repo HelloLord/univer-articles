@@ -33,7 +33,7 @@ class KeywordExtract:
 
     def extract(self, text: str, top_n: int = 3) -> Optional[List[str]]:
         try:
-            if not text or not isinstance(text, str):
+            if not text or not isinstance(text): #Предназначено для вызова только с одним аргументом
                 raise ValueError("Файл не может быть пустым")
 
             keywords = self.extractor.extract_keywords(text, str)
