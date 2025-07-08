@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from .secrets import SECRET_KEY
 import os
 from dotenv import load_dotenv
@@ -17,6 +18,33 @@ REST_FRAMEWORK = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': { #Форматирует лог сообщение
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': { #Решает что делать с сообщениями
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'D:/PythonProjects/univer/log.log',
+            'formatter': 'verbose'
+        },
+    },
+    'loggers': { #Корзина для логов сообщений
+        'mailings': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',

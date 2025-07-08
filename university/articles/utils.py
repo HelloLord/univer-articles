@@ -12,6 +12,7 @@ from yake.core import yake
 
 from .models import Article
 
+logger = logging.getLogger('mailings')
 """
 Извлекает ключевые слова из текста
 """
@@ -33,10 +34,10 @@ class KeywordExtract:
 
     def extract(self, text: str, top_n: int = 3) -> Optional[List[str]]:
         try:
-            if not text or not isinstance(text): #Предназначено для вызова только с одним аргументом
+            if not text or not isinstance(text, str): #Предназначено для вызова только с одним аргументом
                 raise ValueError("Файл не может быть пустым")
 
-            keywords = self.extractor.extract_keywords(text, str)
+            keywords = self.extractor.extract_keywords(text)
             filtred_keywords = [kw[0] for kw in keywords if len(kw[0]) <= 20]
 
             if not filtred_keywords:
