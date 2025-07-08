@@ -1,4 +1,4 @@
 secrets.py
 .env
 media
-log.log
+logging_folders

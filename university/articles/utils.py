@@ -12,7 +12,9 @@ from yake.core import yake
 
 from .models import Article
 
-logger = logging.getLogger('mailings')
+error_logger = logging.getLogger('mailings.error_file')
+debug_logger = logging.getLogger('mailings.debug_file')
+
 """
 Извлекает ключевые слова из текста
 """
@@ -28,7 +30,7 @@ class KeywordExtract:
                 features=None
             )
         except Exception as e:
-            logger.error(f"Ошибка инициализации KeywordExtract: {str(e)}")
+            error_logger.error(f"Ошибка инициализации KeywordExtract: {str(e)}")
             raise ValueError(f"Ошибка при инициализации KeywordExtract: {str(e)}")
 
 
@@ -46,7 +48,7 @@ class KeywordExtract:
             return filtred_keywords[:top_n]
 
         except Exception as e:
-            logger.error(f"Ошибка при извлечении ключевых слов: {str(e)}")
+            error_logger.error(f"Ошибка при извлечении ключевых слов: {str(e)}")
             return None
 """
 Извлекает текст из PDF файлов.
@@ -64,7 +66,7 @@ class PDFProcessing:
                 text += page.extract_text() or ""
 
         except Exception as e:
-            logging.error(f"Ошибка при извлечении текста из PDF: {str(e)}")
+            error_logger.error(f"Ошибка при извлечении текста из PDF: {str(e)}")
             return None
         return text
 
@@ -118,9 +120,9 @@ def clean_rejected_articles() -> int:
         try:
             if os.path.exists(pdf_file_path):
                 os.remove(pdf_file_path)
-                logger.info(f"файл удален: {pdf_file_path}")
+                debug_logger.info(f"Удалено:{pdf_file_path}, {deleted_count}")
         except Exception as e:
-            logger.error(f"Ошибка при удалении файла {pdf_file_path}: {e}")
+            debug_logger.error(f"Ошибка при удалении файла {pdf_file_path}: {e}")
 
     return deleted_count
 

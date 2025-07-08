@@ -22,25 +22,51 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'formatters': { #Форматирует лог сообщение
+    'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
     },
-    'handlers': { #Решает что делать с сообщениями
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'D:/PythonProjects/univer/log.log',
-            'formatter': 'verbose'
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue'
         },
     },
-    'loggers': { #Корзина для логов сообщений
-        'mailings': {
-            'handlers': ['file'],
+    'handlers': {
+        'debug_file': {
             'level': 'DEBUG',
-            'propagate': True,
+            'class': 'logging.FileHandler',
+            'filename': 'D:/PythonProjects/univer/logging_folders/debug.log',
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'D:/PythonProjects/univer/logging_folders/errors.log',
+            'formatter': 'verbose',
+        },
+        'warning_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': 'D:/PythonProjects/univer/logging_folders/warning.log',
+            'formatter': 'verbose',
+        },
+        'critical_file': {
+            'level': 'CRITICAL',
+            'class': 'logging.FileHandler',
+            'filename': 'D:/PythonProjects/univer/logging_folders/critical.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'mailings': {
+            'handlers': ['debug_file', 'error_file', 'warning_file', 'critical_file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
