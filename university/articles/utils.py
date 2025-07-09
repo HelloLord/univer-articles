@@ -2,18 +2,16 @@ import logging
 import os.path
 from datetime import timedelta
 from typing import Tuple, Optional, List, Union, Any
-from venv import logger
 from celery import shared_task
 from django.utils import timezone
 import PyPDF2
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from yake.core import yake
-
 from .models import Article
 
-error_logger = logging.getLogger('mailings.error_file')
-debug_logger = logging.getLogger('mailings.debug_file')
+
+logger = logging.getLogger('mailings')
 
 """
 Извлекает ключевые слова из текста
@@ -30,13 +28,13 @@ class KeywordExtract:
                 features=None
             )
         except Exception as e:
-            error_logger.error(f"Ошибка инициализации KeywordExtract: {str(e)}")
-            raise ValueError(f"Ошибка при инициализации KeywordExtract: {str(e)}")
+            logger.error(f"Ошибка инициализации KeywordExtract: {str(e)}")
+            raise
 
 
     def extract(self, text: str, top_n: int = 3) -> Optional[List[str]]:
         try:
-            if not text or not isinstance(text, str): #Предназначено для вызова только с одним аргументом
+            if not text or not isinstance(text, str) or not text.strip(): #Предназначено для вызова только с одним аргументом
                 raise ValueError("Файл не может быть пустым")
 
             keywords = self.extractor.extract_keywords(text)
@@ -48,7 +46,7 @@ class KeywordExtract:
             return filtred_keywords[:top_n]
 
         except Exception as e:
-            error_logger.error(f"Ошибка при извлечении ключевых слов: {str(e)}")
+            logger.error(f"Ошибка при извлечении ключевых слов: {str(e)}")
             return None
 """
 Извлекает текст из PDF файлов.
@@ -66,7 +64,7 @@ class PDFProcessing:
                 text += page.extract_text() or ""
 
         except Exception as e:
-            error_logger.error(f"Ошибка при извлечении текста из PDF: {str(e)}")
+            logger.error(f"Ошибка при извлечении текста из PDF: {str(e)}")
             return None
         return text
 
@@ -120,9 +118,9 @@ def clean_rejected_articles() -> int:
         try:
             if os.path.exists(pdf_file_path):
                 os.remove(pdf_file_path)
-                debug_logger.info(f"Удалено:{pdf_file_path}, {deleted_count}")
+                logger.debug(f"Файлы удалены: {pdf_file_path}, {deleted_count}")
         except Exception as e:
-            debug_logger.error(f"Ошибка при удалении файла {pdf_file_path}: {e}")
+            logger.error(f"Ошибка при удалении файла {pdf_file_path}: {e}")
 
     return deleted_count
 

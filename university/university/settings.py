@@ -23,48 +23,22 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
+        'main_formater': {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
     },
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        },
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue'
-        },
-    },
     'handlers': {
-        'debug_file': {
+        'general_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'D:/PythonProjects/univer/logging_folders/debug.log',
-            'formatter': 'verbose',
-        },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': 'D:/PythonProjects/univer/logging_folders/errors.log',
-            'formatter': 'verbose',
-        },
-        'warning_file': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'filename': 'D:/PythonProjects/univer/logging_folders/warning.log',
-            'formatter': 'verbose',
-        },
-        'critical_file': {
-            'level': 'CRITICAL',
-            'class': 'logging.FileHandler',
-            'filename': 'D:/PythonProjects/univer/logging_folders/critical.log',
-            'formatter': 'verbose',
+            'filename': 'D:/PythonProjects/univer/logging_folders/all_logs.log',
+            'formatter': 'main_formater',
         },
     },
     'loggers': {
         'mailings': {
-            'handlers': ['debug_file', 'error_file', 'warning_file', 'critical_file'],
+            'handlers': ['general_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
