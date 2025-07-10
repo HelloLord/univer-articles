@@ -11,7 +11,7 @@ from django_filters import rest_framework as django_filters
 
 from .view_tracking import track_article_view
 
-from .utils import clean_rejected_articles
+from .utils import clean_rejected_articles, get_recommendation_articles
 
 from .self_permissions import IsReviewerOrAdmin, IsStuffOrAdmin
 
@@ -71,32 +71,9 @@ class ArticleRecommendationView(generics.ListAPIView):
     serializer_class = BaseArticleSerializer
 
     def get_queryset(self):
-        user = self.request.user       #Получаем текущего пользователя (который делает запрос к API)
+        user = self.request.user
+        return get_recommendation_articles(user)
 
-        viewed_categories = UserViewHistory.objects.filter(user=user   #Фильтруем историю просмотров статей пользователя
-        ).values('article__category'        #Получаем значения статей, которые пользователь просмотртвал
-        ).annotate(count=Count('article__category')     #Присваиваем каждому значению, колличество просмотров категории
-                              ).order_by('-count')[:3]        #сортируем результаты просмотров по убыванию
-                                                                #берм первые три категории
-        category_ids = []
-        for item in viewed_categories:   #Добавляем ID категории из viewed_categories в пустой список
-            category_ids.append(item['article__category'])
-
-        viewed_article_ids = UserViewHistory.objects.filter(
-            user=user              #Получаем id статей, которые пользователь посмотрел
-        ).values_list('article_id', flat=True)          #получаем результаты в виде плоского списка
-
-
-        recommended_articles = Article.objects.filter(
-                    # Получаем статьи, которые находятся в category_ids
-            category_id__in=category_ids
-        ).exclude(  #Исключаем статьи которые пользователь уже просмотривал
-            id__in=viewed_article_ids
-        ).annotate(  #Анотируем статью со средним рейтингом
-            avg_rating=Avg('rating__rating')
-        )
-        recommended_articles = recommended_articles.order_by('-avg_rating')[:10]
-        return recommended_articles
 
 
 """

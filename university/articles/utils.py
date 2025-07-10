@@ -3,15 +3,43 @@ import os.path
 from datetime import timedelta
 from typing import Tuple, Optional, List, Union, Any
 from celery import shared_task
+from django.db.models import Count, Avg
 from django.utils import timezone
 import PyPDF2
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from yake.core import yake
-from .models import Article
-
+from .models import Article, UserViewHistory
 
 logger = logging.getLogger('mailings')
+
+
+
+def get_recommendation_articles(user):
+    viewed_categories = UserViewHistory.objects.filter(user=user   #Фильтруем историю просмотров статей пользователя
+    ).values('article__category'        #Получаем значения статей, которые пользователь просмотртвал
+    ).annotate(count=Count('article__category')     #Присваиваем каждому значению, колличество просмотров категории
+                              ).order_by('-count')[:3]        #сортируем результаты просмотров по убыванию
+                                                                #берм первые три категории
+    category_ids = []
+    for item in viewed_categories:   #Добавляем ID категории из viewed_categories в пустой список
+        category_ids.append(item['article__category'])
+
+    viewed_article_ids = UserViewHistory.objects.filter(
+        user=user              #Получаем id статей, которые пользователь посмотрел
+    ).values_list('article_id', flat=True)          #получаем результаты в виде плоского списка
+
+
+    recommended_articles = Article.objects.filter(
+                    # Получаем статьи, которые находятся в category_ids
+        category_id__in=category_ids
+    ).exclude(  #Исключаем статьи которые пользователь уже просмотривал
+        id__in=viewed_article_ids
+    ).annotate(  #Анотируем статью со средним рейтингом
+        avg_rating=Avg('rating__rating')
+    )
+    recommended_articles = recommended_articles.order_by('-avg_rating')[:10]
+    return recommended_articles
 
 """
 Извлекает ключевые слова из текста
