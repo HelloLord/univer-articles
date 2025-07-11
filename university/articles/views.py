@@ -1,4 +1,3 @@
-from django.db.models import Count, Avg
 from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
@@ -17,7 +16,7 @@ from .self_permissions import IsReviewerOrAdmin, IsStuffOrAdmin
 
 from .pagination import LargeSetPagination,SmallSetPagination
 
-from .models import Article, CustomUser, UserViewHistory
+from .models import Article, CustomUser
 
 from .serializers import (BaseArticleSerializer, CustomUserSerializer,
                           UserViewSerializer, ArticleCreateSerializer,
@@ -57,7 +56,6 @@ class LoginAPIView(APIView):
 
 """logout/"""
 class LogoutView(View):
-
     def get(self,request):
         logout(request)
         return redirect('article-list')

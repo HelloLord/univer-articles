@@ -19,23 +19,23 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
     def validate_username(self, value):
         if not value:
-            raise serializers.ValidationError("Поле username обязательное")
+            raise serializers.ValidationError("field username is required")
         if not value.isalnum():
-            raise serializers.ValidationError("username должен содержать только буквы и цифры")
+            raise serializers.ValidationError("username must contains only letter's and charters")
         if CustomUser.objects.filter(username=value).exists():
-            raise serializers.ValidationError(f"логин: {value} уже занят")
+            raise serializers.ValidationError(f"login: {value} already exists")
         return value
 
     def validate_email(self,value):
         if not value:
-            raise serializers.ValidationError("поле email обязательное")
+            raise serializers.ValidationError("field email is required")
         if CustomUser.objects.filter(email=value).exists():
-            raise serializers.ValidationError(f"аккаунт с {value} уже существует.")
+            raise serializers.ValidationError(f"account with email {value} already exists.")
         return value
 
     def validate_phone(self,value):
         if CustomUser.objects.filter(phone=value).exists():
-            raise serializers.ValidationError(f"Аккаунт с телефоном {value} уже существует.")
+            raise serializers.ValidationError(f"account with phone {value} already exists.")
         return value
 
     def create(self, validated_data):
@@ -49,11 +49,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
                 phone=validated_data.get('phone', ''),
                 birth_date=validated_data.get('birth_date')
             )
-            logger.info(f"Пользователь создан: {user.username}")
+            logger.info(f"user create: {user.username}")
             return user
         except Exception as e:
-            logger.error(f"Ошибка при регистрации пользователя: {str(e)}")
-            raise serializers.ValidationError('ошибка при регистрации пользователя: '+ str(e))
+            logger.error(f"error with register user: {str(e)}")
+            raise serializers.ValidationError('error with register: '+ str(e))
 
 """Вложенные сериализаторы, реализуют отображения нужных полей в основных объектах"""
 class CategorySerializer(serializers.ModelSerializer):
@@ -143,15 +143,15 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         pdf_file = data.get('pdf_file')
 
         if not content and not pdf_file:
-            raise serializers.ValidationError('Должен быть либо текст статьи либо PDF-файл')
+            raise serializers.ValidationError('Must be text or PDF file.')
 
         if content and pdf_file:
-            raise serializers.ValidationError('Предоставьте что-то одно, '
-                                               'либо текст статьи либо PDF файл,'
-                                             'но не оба варианта')
+            raise serializers.ValidationError('Please, provide one of these'
+                                              'enter the text of the article or PDF file'
+                                              'but not both')
         if content and len(content.strip()) < 100:
             raise serializers.ValidationError(
-                'Текст статьи должен содержать не менее 100 символов'
+                'Text of article must contains, not less then 100 symbols'
             )
 
         return data
@@ -166,7 +166,7 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 
         content = validated_data.get('content','')
         if not content:
-            raise ValidationError('Поле контент не может быть пустым')
+            raise ValidationError("field content can't be empty")
 
         keywords = KeywordExtract().extract(content) #извлекаем ключевые слова из поля content
         article = Article.objects.create(**validated_data)
@@ -281,10 +281,10 @@ class ArticleRatingSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         article = data.get('article')
         if ArticleRating.objects.filter(user=user, article=article).exists():
-            raise serializers.ValidationError("Вы уже оценили эту статью.")
+            raise serializers.ValidationError("You already rate this article")
         rating = data.get('rating')
         if rating < 1 or rating > 5:
-            raise serializers.ValidationError('Оценка должна быть от 1 до 5')
+            raise serializers.ValidationError('Rating must be from 1 to 5')
         return data
 
 

@@ -13,7 +13,9 @@ from .models import Article, UserViewHistory
 
 logger = logging.getLogger('mailings')
 
-
+"""
+Показывает рекомендации пользователю
+"""
 
 def get_recommendation_articles(user):
     viewed_categories = UserViewHistory.objects.filter(user=user   #Фильтруем историю просмотров статей пользователя
@@ -56,14 +58,14 @@ class KeywordExtract:
                 features=None
             )
         except Exception as e:
-            logger.error(f"Ошибка инициализации KeywordExtract: {str(e)}")
+            logger.error(f"Error of initialization KeywordExtract: {str(e)}")
             raise
 
 
     def extract(self, text: str, top_n: int = 3) -> Optional[List[str]]:
         try:
             if not text or not isinstance(text, str) or not text.strip(): #Предназначено для вызова только с одним аргументом
-                raise ValueError("Файл не может быть пустым")
+                raise ValueError("file can't be empty")
 
             keywords = self.extractor.extract_keywords(text)
             filtred_keywords = [kw[0] for kw in keywords if len(kw[0]) <= 20]
@@ -74,7 +76,7 @@ class KeywordExtract:
             return filtred_keywords[:top_n]
 
         except Exception as e:
-            logger.error(f"Ошибка при извлечении ключевых слов: {str(e)}")
+            logger.error(f"Error with extract keywords: {str(e)}")
             return None
 """
 Извлекает текст из PDF файлов.
@@ -92,7 +94,7 @@ class PDFProcessing:
                 text += page.extract_text() or ""
 
         except Exception as e:
-            logger.error(f"Ошибка при извлечении текста из PDF: {str(e)}")
+            logger.error(f"Error with extract text from PDF file: {str(e)}")
             return None
         return text
 
@@ -103,17 +105,17 @@ class PDFProcessing:
 
         file_extension = os.path.splitext(value.name)[1].lower() #Получаем формат файла
         if not value.name.lower().endswith('.pdf'):
-            raise ValidationError(f'Файл должен быть в формате PDF.'
-                                  f'Загруженный файл имеет формат {file_extension}')
+            raise ValidationError(f'File must be format PDF'
+                                  f'loaded file has: {file_extension}')
         if value.size == 0:
-            raise ValidationError('Файл не может быть пустым.')
+            raise ValidationError("File can't be empty")
 
         content: Optional[str] = PDFProcessing.extract_text(value)
         if content is None:
-            raise serializers.ValidationError('ошибка обработки PDF: Файл поврежден')
+            raise serializers.ValidationError('PDF file processing error: File is corrupted')
 
         if len(content.strip()) < 100:
-            raise serializers.ValidationError('Текст должен быть более 100 символов')
+            raise serializers.ValidationError('PDF file processing error: File is corrupted')
 
         return content
 
@@ -140,15 +142,15 @@ def clean_rejected_articles() -> int:
     deletion_result: Tuple[int,dict] = rejected_articles.delete() #Результат выполнения метода delete
     deleted_count: int = deletion_result[0] if isinstance(deletion_result, tuple) else 0
 
-    logger.info(f'Удалено {deleted_count} статей')
+    logger.info(f'Deleted {deleted_count} articles')
 
     for pdf_file_path in pdf_file_paths:
         try:
             if os.path.exists(pdf_file_path):
                 os.remove(pdf_file_path)
-                logger.debug(f"Файлы удалены: {pdf_file_path}, {deleted_count}")
+                logger.debug(f"Deleted files: {pdf_file_path}, {deleted_count}")
         except Exception as e:
-            logger.error(f"Ошибка при удалении файла {pdf_file_path}: {e}")
+            logger.error(f"Error with delete files {pdf_file_path}: {e}")
 
     return deleted_count
 
