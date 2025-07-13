@@ -11,6 +11,7 @@ class CustomUser(AbstractUser):
         max_length=30,
         unique=True,
         help_text="Required: 150 charters, letters. digits and @/./+/-/_ only.",
+        blank= False
     )
     email = models.EmailField(unique=True, blank=False)
     phone = models.CharField(max_length=20, blank=True, null=True)

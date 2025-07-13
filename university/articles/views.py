@@ -1,3 +1,5 @@
+from audioop import reverse
+
 from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
@@ -36,7 +38,10 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
         login(request, user)
 
-        return redirect('article-list')
+        return Response({
+            'status': 'success',
+            'redirect_url': '/articles/'
+        }, status=status.HTTP_201_CREATED)
 
 
 """login/"""
