@@ -1,3 +1,5 @@
+import re
+
 from django.db.models import Avg
 from django.db.models.query_utils import logger
 from rest_framework import serializers
@@ -20,10 +22,15 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if not value:
             raise serializers.ValidationError("field username is required")
-        if not value.isalnum():
-            raise serializers.ValidationError("username must contains only letter's and charters")
-        if CustomUser.objects.filter(username=value).exists():
-            raise serializers.ValidationError(f"login: {value} already exists")
+        if len(value) < 4:
+            raise serializers.ValidationError("Username name must be least 4 characters long")
+        if len(value) > 30:
+            raise serializers.ValidationError("Username cannot exceed 30 characters")
+        if not re.match(r'[\w.@+-]+\Z', value):
+            raise serializers.ValidationError(
+                "Username can only contain letters, digits and @/./+/-/_ characters")
+        if CustomUser.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError(f"Username '{value}' is already taken")
         return value
 
     def validate_email(self,value):
