@@ -7,6 +7,12 @@ from django.utils.translation.trans_null import gettext_lazy
 
 
 class CustomUser(AbstractUser):
+    username = models.CharField(
+        max_length=30,
+        unique=True,
+        help_text="Required: 150 charters, letters. digits and @/./+/-/_ only.",
+    )
+    email = models.EmailField(unique=True, blank=False)
     phone = models.CharField(max_length=20, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
