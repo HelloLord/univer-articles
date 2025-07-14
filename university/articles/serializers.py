@@ -22,15 +22,27 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if not value:
             raise serializers.ValidationError("field username is required")
-        if len(value) < 4:
-            raise serializers.ValidationError("Username name must be least 4 characters long")
-        if len(value) > 30:
-            raise serializers.ValidationError("Username cannot exceed 30 characters")
+
+        if value[0].isdigit() or value[0] in '@/./+/-/_':
+            raise serializers.ValidationError(
+                "Username can only contain letters, digits, and @/./+/-/_ characters"
+            )
+        if value.isdigit():
+            raise serializers.ValidationError("Username cannot be entirely numeric")
+
+        if len(value) < 4 or len(value) > 30:
+            raise serializers.ValidationError("Username name must be least 4 characters long or cannot exceed 30 characters")
+
         if not re.match(r'[\w.@+-]+\Z', value):
             raise serializers.ValidationError(
                 "Username can only contain letters, digits and @/./+/-/_ characters")
+
         if CustomUser.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError(f"Username '{value}' is already taken")
+
+        reserved_names = {'admin', 'root', 'me', 'superuser', 'reviewer'}
+        if value.lower() in reserved_names:
+            raise serializers.ValidationError(f"Username '{value}' is reserved")
         return value
 
     def validate_email(self,value):

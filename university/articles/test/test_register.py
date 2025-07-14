@@ -1,8 +1,7 @@
 import random
+import re
 import string
-
-from django.contrib.auth import get_user_model, user_logged_in
-from django.template.defaultfilters import length
+from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 CustomUser = get_user_model()
@@ -18,7 +17,6 @@ class TestRegisterCase(APITestCase):
         self.client = APIClient()
         self.register_url = '/register'
         self.password = 'testpass123'
-
         CustomUser.objects.all().delete()
 
         self.user1 = {
@@ -51,11 +49,12 @@ class TestRegisterCase(APITestCase):
             'email': 'test5@example.com'
         }
 
+
+
     def test_successful_reg(self):
         """
         Запрос создания пользователя.
         """
-
         response = self.client.post(
             self.register_url,
             data=self.user1,
@@ -130,3 +129,24 @@ class TestRegisterCase(APITestCase):
         print(f"\nresponse 5 data: {response.json()}, \nstatus: {response.status_code}")
         print(f"Username not in required length '{self.user5['username']}'")
 
+    def test_reg_user_random_symbols(self):
+        username = self.generate_username()
+        invalid_charters = not re.match(r'^[\w.@+-]+\Z', username)
+        user_data = {
+            'username': username,
+            'password': 'testpass123',
+            'email': f"test{username}@gmail.com"
+        }
+        response = self.client.post(
+            self.register_url,
+            data=user_data,
+            format='json'
+        )
+        if invalid_charters:
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn('username', response.json())
+            print(f"\nОшибка: username содержит запрещенные символы - '{username}'")
+        else:
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            print(f"\nУспешная регистрация с рандомным username - '{username}'")
+        print(f"Response: {response.json()}, Status: {response.status_code}")
