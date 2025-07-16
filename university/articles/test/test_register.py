@@ -1,7 +1,6 @@
 import random
 import string
 from django.contrib.auth import get_user_model
-from pyexpat.errors import messages
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
@@ -44,6 +43,7 @@ class TestRegisterCase(APITestCase):
             {'username': 'user-test', 'password': self.password, 'email': 'user19@example.com'},
             {'username': 'user_name', 'password': self.password, 'email': 'user20@example.com'},
             {'username': 'User123', 'password': self.password, 'email': 'user21@example.com'},
+            {'username': 'Jhon02', 'first_name': '123', 'password':self.password, 'email': 'user1224@gmail.com'}
         ]
     def test_username(self):
 
@@ -60,9 +60,20 @@ class TestRegisterCase(APITestCase):
                 )
                 if response.status_code == HTTP_400_BAD_REQUEST:
                     error_data = response.json()
-                    username_error = error_data.get('username', ['Неизвестная ошибка'])[0]
-                    message = f"Ошибка: {status.HTTP_400_BAD_REQUEST} '{user_data['username']}': {username_error}"
+                    errors = []
+                    if 'username' in error_data:
+                        errors.append(f"username: {error_data['username'][0]}")
+                    if 'first_name' in error_data:
+                        errors.append(f"first_name: {error_data['first_name'][0]}")
+                    if 'last_name' in error_data:
+                        errors.append(f"last_name: {error_data['last_name'][0]}")
+
+
+
+                    message = (f"Ошибка {HTTP_400_BAD_REQUEST} '{user_data['username']}': "
+                               f"{'; '.join(errors)}")
                     error_messages.append(message)
+
 
                 elif response.status_code == HTTP_201_CREATED:
                     response_data = response.json()
