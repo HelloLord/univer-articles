@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
 from .utils import KeywordExtract, PDFProcessing
+from ..university.settings import STATIC_URL
 
 """CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -42,6 +43,20 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if value.lower() in reserved_names:
             raise serializers.ValidationError(f"Username '{value}' is reserved")
         return value
+
+    def validate_first_name(self,value):
+        value = value.capitalize()
+        if not value:
+            raise serializers.ValidationError('field is required')
+
+        if len(value) < 3 or len(value) > 15:
+            raise serializers.ValidationError("first name must be least 3 characters long or cannot exceed 15 characters")
+
+        if not re.match(r'^[A-Za-z]+$', value):
+            raise serializers.ValidationError('first name must contains only english letters')
+
+
+
 
     def validate_email(self,value):
         if not value:

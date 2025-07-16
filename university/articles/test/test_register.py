@@ -61,7 +61,6 @@ class TestRegisterCase(APITestCase):
                 if response.status_code == HTTP_400_BAD_REQUEST:
                     error_data = response.json()
                     username_error = error_data.get('username', ['Неизвестная ошибка'])[0]
-
                     message = f"Ошибка: {status.HTTP_400_BAD_REQUEST} '{user_data['username']}': {username_error}"
                     error_messages.append(message)
 
@@ -72,6 +71,7 @@ class TestRegisterCase(APITestCase):
                         self.assertEqual(response_data['redirect_url'], '/articles/')
                         message = f"Создан: {status.HTTP_201_CREATED} ({user_data['username']})"
                         success_responses.append(message)
+
                     except (AssertionError, KeyError) as e:
                         message = (f"Создан: {status.HTTP_201_CREATED} ({user_data['username']}),"
                                    f"не соответствует ожидаемому:{str(e)}")

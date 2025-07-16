@@ -36,19 +36,3 @@ class TestReviewPermission(BaseTestCase):
         response = self.client.get('/articles/review')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-
-
-
-
-
-# class TestArticleSubmission(BaseTestCase):
-#     def setUp(self):
-#         self.client = APIClient()
-#         self.user = CustomUser.objects.create_user(username='testuser2', password='testpass2')
-#         self.client.force_authenticate(user=self.user)
-#
-#     def test_article_submission(self):
-#         data = self.TEST_CONTENT
-#         response = self.client.post('/articles/create', data)
-#         print(response.data)
-#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
