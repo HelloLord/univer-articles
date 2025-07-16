@@ -1,5 +1,3 @@
-from audioop import reverse
-
 from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated

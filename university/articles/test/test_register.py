@@ -49,6 +49,7 @@ class TestRegisterCase(APITestCase):
 
         error_messages = []
         crated_users = []
+        success_responses = []
 
         for user_data in self.users:
             with self.subTest(username=user_data['username']):
@@ -65,10 +66,20 @@ class TestRegisterCase(APITestCase):
                     error_messages.append(message)
 
                 elif response.status_code == HTTP_201_CREATED:
-                    message = f"Создан: {status.HTTP_201_CREATED} ({user_data['username']})"
-                    crated_users.append(message)
+                    response_data = response.json()
+                    try:
+                        self.assertEqual(response_data['status'], 'success')
+                        self.assertEqual(response_data['redirect_url'], '/articles/')
+                        message = f"Создан: {status.HTTP_201_CREATED} ({user_data['username']})"
+                        success_responses.append(message)
+                    except (AssertionError, KeyError) as e:
+                        message = (f"Создан: {status.HTTP_201_CREATED} ({user_data['username']}),"
+                                   f"не соответствует ожидаемому:{str(e)}")
+                        error_messages.append(message)
+                    crated_users.append(f"Создан пользователь: {user_data['username']}")
 
-        print("\n" + "\n".join(error_messages))
-        print("\n" + "\n".join(crated_users))
+        print("\n" + "\n".join(error_messages) if error_messages else "нет ошибок")
+        print("\n" + "\n".join(crated_users) if crated_users else "не было создано пользователей")
+        print("\n" + "\n".join(success_responses) if success_responses else "Нет успешных ответов от сервера")
 
 
