@@ -8,13 +8,27 @@ from django.utils.translation.trans_null import gettext_lazy
 
 class CustomUser(AbstractUser):
     username = models.CharField(
-        max_length=30,
         unique=True,
         help_text="Required: 4-30 letters, digits and @/./+/-/_ characters.",
         blank= False
     )
-    email = models.EmailField(unique=True, blank=False)
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    first_name = models.CharField(
+        help_text="Required: 3-10 letters.",
+        blank= False
+    )
+    last_name = models.CharField(
+        help_text= "Required: 3-10 letters.",
+        blank= False
+    )
+    email = models.EmailField(
+        unique=True,
+        blank=False
+    )
+    phone = models.CharField(
+        unique=True,
+        blank=False,
+        default = +321342456
+    )
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     is_reviewer = models.BooleanField(default=False)
