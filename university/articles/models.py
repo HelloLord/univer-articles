@@ -7,17 +7,14 @@ from django.utils.translation.trans_null import gettext_lazy
 
 
 class CustomUser(AbstractUser):
-    # Валид
     username = models.CharField(
         unique=True,
         help_text="Required: 4-30 letters, digits and @/./+/-/_ characters.",
     )
-    # Валид
     first_name = models.CharField(
         help_text="Required: 3-10 letters.",
         blank= False
     )
-    # Валид
     last_name = models.CharField(
         help_text= "Required: 3-10 letters.",
         blank= False

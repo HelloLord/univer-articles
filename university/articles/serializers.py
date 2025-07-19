@@ -1,9 +1,11 @@
 import re
 
+from dateutil.utils import today
 from django.db.models import Avg
 from django.db.models.query_utils import logger
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from datetime import date
 
 from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
 from .utils import KeywordExtract, PDFProcessing
@@ -83,6 +85,21 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         if CustomUser.objects.filter(phone=value).exists():
             raise serializers.ValidationError(f"account with phone {value} already exists.")
+        return value
+
+    def validate_birth_date(self,value):
+        if value is None:
+            return value
+
+        today = date.today()
+
+        if value > today:
+            raise serializers.ValidationError("Birth date cannot be in the future")
+
+        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        if age < 13:
+            raise serializers.ValidationError("You must be at least 13 years old to register.")
+
         return value
 
     def create(self, validated_data):
