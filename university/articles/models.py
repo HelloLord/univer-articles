@@ -11,7 +11,6 @@ class CustomUser(AbstractUser):
     username = models.CharField(
         unique=True,
         help_text="Required: 4-30 letters, digits and @/./+/-/_ characters.",
-        blank= False
     )
     # Валид
     first_name = models.CharField(
@@ -35,13 +34,15 @@ class CustomUser(AbstractUser):
         help_text='Required: At least 8 characters '
                   'including letters and numbers.',
         blank=False
-
     )
     birth_date = models.DateField(
-        blank=True,
-        null=True)
+        blank=False,
+        null=True
+    )
 
-    is_reviewer = models.BooleanField(default=False)
+    is_reviewer = models.BooleanField(
+        default=False
+    )
 
 
 class Category(models.Model):

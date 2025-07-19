@@ -14,19 +14,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('username','first_name','last_name','email', 'password', 'phone', 'avatar', 'birth_date')
+        fields = ('username','first_name','last_name','email', 'password', 'phone', 'birth_date')
         extra_kwargs = {
             'password': {'write_only': True},
             'email': {'write_only': True},
         }
     def validate_username(self, value):
-        if not value:
-            raise serializers.ValidationError("field username is required")
-
+        value = value.lower()
         if value[0].isdigit() or value.isdigit() or value[0] in '@/./+/-/_':
             raise serializers.ValidationError(
-                "Username can't start with '@/./+/-/_', and cannot be entirely numeric"
-            )
+                "Username can't start with '@/./+/-/_', and cannot be entirely numeric")
 
         if len(value) < 4 or len(value) > 30:
             raise serializers.ValidationError("Username name must be least 4 characters long or cannot exceed 30 characters")
@@ -67,8 +64,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
     def validate_email(self,value):
-        if not value:
-            raise serializers.ValidationError("field email is required")
         if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError(f"account with email {value} already exists.")
         return value
