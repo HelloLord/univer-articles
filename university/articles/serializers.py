@@ -21,6 +21,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
     def validate_username(self, value):
         value = value.lower()
+        if not value:
+            raise serializers.ValidationError("username is required")
+
         if value[0].isdigit() or value.isdigit() or value[0] in '@/./+/-/_':
             raise serializers.ValidationError(
                 "Username can't start with '@/./+/-/_', and cannot be entirely numeric")
@@ -43,7 +46,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def validate_first_name(self,value):
         value = value.capitalize()
         if not value:
-            raise serializers.ValidationError('field is required')
+            raise serializers.ValidationError('first name is required')
 
         if len(value) < 3 or len(value) > 10:
             raise serializers.ValidationError("first name must be least 3 characters long or cannot exceed 10 characters")
@@ -54,7 +57,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def validate_last_name(self,value):
         value = value.capitalize()
         if not value:
-            raise serializers.ValidationError('field is required')
+            raise serializers.ValidationError('last name is required')
 
         if len(value) < 3 or len(value) > 10:
             raise serializers.ValidationError("last name must be least 3 characters long or cannot exceed 10 characters")
@@ -62,13 +65,22 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not re.match(r'^[A-Za-z]+$', value):
             raise serializers.ValidationError('last name must contains only english letters')
 
-
     def validate_email(self,value):
+        if not value:
+            raise serializers.ValidationError("email is required")
+
         if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError(f"account with email {value} already exists.")
         return value
 
     def validate_phone(self,value):
+        if not value:
+            raise serializers.ValidationError("phone is required")
+
+        if not re.match(r'^\+?1?\d{9,15}$', value):
+            raise serializers.ValidationError(
+                "Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
+
         if CustomUser.objects.filter(phone=value).exists():
             raise serializers.ValidationError(f"account with phone {value} already exists.")
         return value
