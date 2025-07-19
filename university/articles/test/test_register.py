@@ -1,6 +1,7 @@
 import random
 import string
-from datetime import date, timedelta
+
+from .query_sets_test import register_users
 
 from django.contrib.auth import get_user_model
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
@@ -18,112 +19,9 @@ class TestRegisterCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.register_url = '/register'
-        self.password = 'testpass123'
         CustomUser.objects.all().delete()
 
-        today = date.today()
-
-        self.users = [
-            {
-                'username': 'validuser1',
-                'first_name': 'John',
-                'last_name': 'Doe',
-                'email': 'user1@example.com',
-                'password': self.password,
-                'phone': '+1234567890',
-                'birth_date': str(today - timedelta(days=365 * 15))
-            },
-            {
-                'username': 'usr',
-                'first_name': 'Test',
-                'last_name': 'User',
-                'email': 'user2@example.com',
-                'password': self.password,
-                'phone': '+1234567891',
-                'birth_date': str(today - timedelta(days=365 * 20))
-            },
-            {
-                'username': '1invalid',
-                'first_name': 'Test',
-                'last_name': 'User',
-                'email': 'user3@example.com',
-                'password': self.password,
-                'phone': '+1234567892',
-                'birth_date': str(today - timedelta(days=365 * 20))
-            },
-            {
-                'username': 'validuser4',
-                'first_name': 'Jo',
-                'last_name': 'Doe',
-                'email': 'user4@example.com',
-                'password': self.password,
-                'phone': '+1234567893',
-                'birth_date': str(today - timedelta(days=365 * 20))
-            },
-            {
-                'username': 'validuser5',
-                'first_name': 'Jane',
-                'last_name': 'Doe1',
-                'email': 'user5@example.com',
-                'password': self.password,
-                'phone': '+1234567894',
-                'birth_date': str(today - timedelta(days=365 * 20))
-            },
-            {
-                'username': 'validuser6',
-                'first_name': 'Alice',
-                'last_name': 'Smith',
-                'email': '',
-                'password': self.password,
-                'phone': '+1234567895',
-                'birth_date': str(today - timedelta(days=365 * 20))
-            },
-            {
-                'username': 'validuser7',
-                'first_name': 'Bob',
-                'last_name': 'Johnson',
-                'email': 'user1@example.com',  # дубликат
-                'password': self.password,
-                'phone': '+1234567896',
-                'birth_date': str(today - timedelta(days=365 * 20))
-            },
-            {
-                'username': 'validuser8',
-                'first_name': 'Emma',
-                'last_name': 'Davis',
-                'email': 'user8@example.com',
-                'password': self.password,
-                'phone': '1234567897',
-                'birth_date': str(today - timedelta(days=365 * 20))
-            },
-            {
-                'username': 'validuser9',
-                'first_name': 'Michael',
-                'last_name': 'Brown',
-                'email': 'user9@example.com',
-                'password': self.password,
-                'phone': '+12345',
-                'birth_date': str(today - timedelta(days=365 * 20))
-            },
-            {
-                'username': 'validuser10',
-                'first_name': 'Sophia',
-                'last_name': 'Wilson',
-                'email': 'user10@example.com',
-                'password': self.password,
-                'phone': '+1234567898',
-                'birth_date': str(today - timedelta(days=365 * 9))
-            },
-            {
-                'username': 'validuser11',
-                'first_name': 'William',
-                'last_name': 'Taylor',
-                'email': 'user11@example.com',
-                'password': self.password,
-                'phone': '+1234567899',
-                'birth_date': str(today + timedelta(days=365))
-            }
-        ]
+        self.users = register_users
 
     def test_username(self):
 
@@ -171,7 +69,13 @@ class TestRegisterCase(APITestCase):
                         message = (f"Создан: {status.HTTP_201_CREATED} ({user_data['username']}),"
                                    f"не соответствует ожидаемому:{str(e)}")
                         error_messages.append(message)
-                    crated_users.append(f"Создан пользователь: {user_data['username']}")
+                    crated_users.append(f"Создан пользователь:"
+                                        f"\nusername: {user_data['username']}"
+                                        f"\nfirst_name: {user_data['first_name']}"
+                                        f"\nlast_name: {user_data['last_name']}"
+                                        f"\nlogin: {user_data['username']}"
+                                        f"\nphone:{user_data['phone']}"
+                                        f"\nbirth_date: {user_data['birth_date']}\n")
 
         print("\n" + "\n".join(error_messages) if error_messages else "нет ошибок")
         print("\n" + "\n".join(crated_users) if crated_users else "Не было создано пользователей")

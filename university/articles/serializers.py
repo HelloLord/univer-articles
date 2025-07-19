@@ -1,6 +1,4 @@
 import re
-
-from dateutil.utils import today
 from django.db.models import Avg
 from django.db.models.query_utils import logger
 from rest_framework import serializers
@@ -90,12 +88,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not cleaned_phone.startswith('+'):
             cleaned_phone = '+' + cleaned_phone
 
-        if len(value) > 15:
-            raise serializers.ValidationError("phone number cannot at least 7 digits or exceed 15 digits")
+        if len(cleaned_phone) > 16 or len(cleaned_phone) < 8:
+            raise serializers.ValidationError("phone number cannot at least 8 digits or exceed 16 digits")
 
         if not re.match(r'^\+\d{7,15}$', cleaned_phone):
             raise serializers.ValidationError(
-                "Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
+                "Phone number must be entered in the format: '+999999999' (7-15 digits after +)")
 
         if CustomUser.objects.filter(phone=cleaned_phone).exists():
             raise serializers.ValidationError(f"account with phone {cleaned_phone} already exists.")
