@@ -43,6 +43,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         reserved_names = {'admin', 'root', 'me', 'superuser', 'reviewer'}
         if value.lower() in reserved_names:
             raise serializers.ValidationError(f"Username '{value}' is reserved")
+
         return value
 
     def validate_first_name(self,value):
@@ -56,6 +57,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not re.match(r'^[A-Za-z]+$', value):
             raise serializers.ValidationError('first name must contains only english letters')
 
+        return value
+
     def validate_last_name(self,value):
         value = value.capitalize()
         if not value:
@@ -67,17 +70,23 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not re.match(r'^[A-Za-z]+$', value):
             raise serializers.ValidationError('last name must contains only english letters')
 
+        return value
+
     def validate_email(self,value):
         if not value:
             raise serializers.ValidationError("email is required")
 
         if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError(f"account with email {value} already exists.")
+
         return value
 
     def validate_phone(self,value):
         if not value:
             raise serializers.ValidationError("phone is required")
+
+        if len(value) > 15:
+            raise serializers.ValidationError("phone number cannot at least 7 digits or exceed 15 digits")
 
         if not re.match(r'^\+?1?\d{9,15}$', value):
             raise serializers.ValidationError(
@@ -85,11 +94,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         if CustomUser.objects.filter(phone=value).exists():
             raise serializers.ValidationError(f"account with phone {value} already exists.")
+
         return value
 
     def validate_birth_date(self,value):
-        if value is None:
-            return value
+        if not value:
+            return serializers.ValidationError("birth date can't be empty")
 
         today = date.today()
 
@@ -97,8 +107,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Birth date cannot be in the future")
 
         age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
-        if age < 13:
-            raise serializers.ValidationError("You must be at least 13 years old to register.")
+        if age < 10:
+            raise serializers.ValidationError("You must be at least 10 years old to register.")
 
         return value
 
@@ -106,11 +116,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
         try:
             user = CustomUser.objects.create_user(
                 username=validated_data['username'],
-                email=validated_data.get('email', ''),
+                email=validated_data['email'],
                 password=validated_data['password'],
-                first_name=validated_data.get('first_name', ''),
-                last_name=validated_data.get('last_name', ''),
-                phone=validated_data.get('phone', ''),
+                first_name=validated_data['first_name'],
+                last_name=validated_data['last_name'],
+                phone=validated_data['phone'],
                 birth_date=validated_data.get('birth_date')
             )
             logger.info(f"user create: {user.username}")

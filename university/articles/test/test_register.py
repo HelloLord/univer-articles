@@ -1,5 +1,7 @@
 import random
 import string
+from datetime import date, timedelta
+
 from django.contrib.auth import get_user_model
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.test import APITestCase, APIClient
@@ -19,31 +21,19 @@ class TestRegisterCase(APITestCase):
         self.password = 'testpass123'
         CustomUser.objects.all().delete()
 
+        today = date.today()
 
         self.users = [
-            {'username': 'admin', 'password': self.password, 'email': 'user0@example.com'},
-            {'username': 'root', 'password': self.password, 'email': 'user1@example.com'},
-            {'username': 'superuser', 'password': self.password, 'email': 'user2@example.com'},
-            {'username': '@test', 'password': self.password, 'email': 'user3@example.com'},
-            {'username': '.test', 'password': self.password, 'email': 'user4@example.com'},
-            {'username': '+test', 'password': self.password, 'email': 'user5@example.com'},
-            {'username': '-test', 'password': self.password, 'email': 'user6@example.com'},
-            {'username': '_test', 'password': self.password, 'email': 'user7@example.com'},
-            {'username': '1test', 'password': self.password, 'email': 'user8@example.com'},
-            {'username': '1234', 'password': self.password, 'email': 'user9@example.com'},
-            {'username': 'abc', 'password': self.password, 'email': 'user10@example.com'},
-            {'username': 'a' * 31, 'password': self.password, 'email': 'user11@example.com'},
-            {'username': 'test!user', 'password': self.password, 'email': 'user12@example.com'},
-            {'username': 'test user', 'password': self.password, 'email': 'user13@example.com'},
-            {'username': 'test#user', 'password': self.password, 'email': 'user14@example.com'},
-            {'username': 'existing', 'password': self.password, 'email': 'user15@example.com'},
-            {'username': 'validUser', 'password': self.password, 'email': 'user16@example.com'},
-            {'username': 'user.name', 'password': self.password, 'email': 'user17@example.com'},
-            {'username': 'user+test', 'password': self.password, 'email': 'user18@example.com'},
-            {'username': 'user-test', 'password': self.password, 'email': 'user19@example.com'},
-            {'username': 'user_name', 'password': self.password, 'email': 'user20@example.com'},
-            {'username': 'User123', 'password': self.password, 'email': 'user21@example.com'},
-            {'username': 'Jhon02', 'first_name': '123', 'password':self.password, 'email': 'user1224@gmail.com'}
+            {
+                'username': 'validUser1',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'email': 'user143@example.com',
+                'password': self.password,
+                'phone': '1234545343465677657657890',
+                'birth_date': str(today - timedelta(days=365 * 15))
+            },
+
         ]
     def test_username(self):
 
@@ -67,8 +57,12 @@ class TestRegisterCase(APITestCase):
                         errors.append(f"first_name: {error_data['first_name'][0]}")
                     if 'last_name' in error_data:
                         errors.append(f"last_name: {error_data['last_name'][0]}")
-
-
+                    if 'email' in error_data:
+                        errors.append(f"email: {error_data['email'][0]}")
+                    if 'phone' in error_data:
+                        errors.append(f"phone: {error_data['phone'][0]}")
+                    if 'birth_date' in error_data:
+                        errors.append(f"birth_date:{error_data['birth_date'][0]}")
 
                     message = (f"Ошибка {HTTP_400_BAD_REQUEST} '{user_data['username']}': "
                                f"{'; '.join(errors)}")
@@ -90,7 +84,7 @@ class TestRegisterCase(APITestCase):
                     crated_users.append(f"Создан пользователь: {user_data['username']}")
 
         print("\n" + "\n".join(error_messages) if error_messages else "нет ошибок")
-        print("\n" + "\n".join(crated_users) if crated_users else "не было создано пользователей")
+        print("\n" + "\n".join(crated_users) if crated_users else "Не было создано пользователей")
         print("\n" + "\n".join(success_responses) if success_responses else "Нет успешных ответов от сервера")
 
 
