@@ -25,16 +25,106 @@ class TestRegisterCase(APITestCase):
 
         self.users = [
             {
-                'username': 'validUser1',
+                'username': 'validuser1',
                 'first_name': 'John',
                 'last_name': 'Doe',
-                'email': 'user143@example.com',
+                'email': 'user1@example.com',
                 'password': self.password,
-                'phone': '1234545343465677657657890',
+                'phone': '+1234567890',
                 'birth_date': str(today - timedelta(days=365 * 15))
             },
-
+            {
+                'username': 'usr',
+                'first_name': 'Test',
+                'last_name': 'User',
+                'email': 'user2@example.com',
+                'password': self.password,
+                'phone': '+1234567891',
+                'birth_date': str(today - timedelta(days=365 * 20))
+            },
+            {
+                'username': '1invalid',
+                'first_name': 'Test',
+                'last_name': 'User',
+                'email': 'user3@example.com',
+                'password': self.password,
+                'phone': '+1234567892',
+                'birth_date': str(today - timedelta(days=365 * 20))
+            },
+            {
+                'username': 'validuser4',
+                'first_name': 'Jo',
+                'last_name': 'Doe',
+                'email': 'user4@example.com',
+                'password': self.password,
+                'phone': '+1234567893',
+                'birth_date': str(today - timedelta(days=365 * 20))
+            },
+            {
+                'username': 'validuser5',
+                'first_name': 'Jane',
+                'last_name': 'Doe1',
+                'email': 'user5@example.com',
+                'password': self.password,
+                'phone': '+1234567894',
+                'birth_date': str(today - timedelta(days=365 * 20))
+            },
+            {
+                'username': 'validuser6',
+                'first_name': 'Alice',
+                'last_name': 'Smith',
+                'email': '',
+                'password': self.password,
+                'phone': '+1234567895',
+                'birth_date': str(today - timedelta(days=365 * 20))
+            },
+            {
+                'username': 'validuser7',
+                'first_name': 'Bob',
+                'last_name': 'Johnson',
+                'email': 'user1@example.com',  # дубликат
+                'password': self.password,
+                'phone': '+1234567896',
+                'birth_date': str(today - timedelta(days=365 * 20))
+            },
+            {
+                'username': 'validuser8',
+                'first_name': 'Emma',
+                'last_name': 'Davis',
+                'email': 'user8@example.com',
+                'password': self.password,
+                'phone': '1234567897',
+                'birth_date': str(today - timedelta(days=365 * 20))
+            },
+            {
+                'username': 'validuser9',
+                'first_name': 'Michael',
+                'last_name': 'Brown',
+                'email': 'user9@example.com',
+                'password': self.password,
+                'phone': '+12345',
+                'birth_date': str(today - timedelta(days=365 * 20))
+            },
+            {
+                'username': 'validuser10',
+                'first_name': 'Sophia',
+                'last_name': 'Wilson',
+                'email': 'user10@example.com',
+                'password': self.password,
+                'phone': '+1234567898',
+                'birth_date': str(today - timedelta(days=365 * 9))
+            },
+            {
+                'username': 'validuser11',
+                'first_name': 'William',
+                'last_name': 'Taylor',
+                'email': 'user11@example.com',
+                'password': self.password,
+                'phone': '+1234567899',
+                'birth_date': str(today + timedelta(days=365))
+            }
         ]
+
     def test_username(self):
 
         error_messages = []

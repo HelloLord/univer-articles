@@ -85,17 +85,22 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("phone is required")
 
+        cleaned_phone = re.sub(r'[^\d+]','', value)
+
+        if not cleaned_phone.startswith('+'):
+            cleaned_phone = '+' + cleaned_phone
+
         if len(value) > 15:
             raise serializers.ValidationError("phone number cannot at least 7 digits or exceed 15 digits")
 
-        if not re.match(r'^\+?1?\d{9,15}$', value):
+        if not re.match(r'^\+\d{7,15}$', cleaned_phone):
             raise serializers.ValidationError(
                 "Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
 
-        if CustomUser.objects.filter(phone=value).exists():
-            raise serializers.ValidationError(f"account with phone {value} already exists.")
+        if CustomUser.objects.filter(phone=cleaned_phone).exists():
+            raise serializers.ValidationError(f"account with phone {cleaned_phone} already exists.")
 
-        return value
+        return cleaned_phone
 
     def validate_birth_date(self,value):
         if not value:
