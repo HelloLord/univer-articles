@@ -1,21 +1,13 @@
-import random
-import string
-
 from .query_sets_test import register_users
-
 from django.contrib.auth import get_user_model
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
+
 CustomUser = get_user_model()
 
 
 class TestRegisterCase(APITestCase):
-    @staticmethod
-    def generate_username(length=10):
-        chars = string.ascii_letters + string.digits + '@.+-_'
-        return ''.join(random.choice(chars) for _ in range(length))
-
     def setUp(self):
         self.client = APIClient()
         self.register_url = '/register'
