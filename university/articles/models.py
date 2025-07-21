@@ -43,7 +43,9 @@ class CustomUser(AbstractUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(
+        unique= True
+    )
 
     def __str__(self):
         return self.name
@@ -56,7 +58,6 @@ class Article(models.Model):
         ('rejected', 'Отклонена'),
     ]
     title = models.CharField(
-        max_length=50,
         error_messages={
             'max_length': gettext_lazy('Название не может превышать 50 символов.'),
         },
