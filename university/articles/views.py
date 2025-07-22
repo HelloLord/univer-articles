@@ -76,7 +76,6 @@ class ArticleRecommendationView(generics.ListAPIView):
         return get_recommendation_articles(user)
 
 
-
 """
 articles/
 Выводит список опубликованных статей + фильтрация
@@ -102,6 +101,7 @@ class ArticleListView(generics.ListAPIView):
             is_published=True,
             status='published'
         ).select_related('category')
+
 
 """
 articles/<int:pk>
@@ -138,6 +138,7 @@ class ArticleRatingView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         return self.create(request,*args,**kwargs)
 
+
 """
 articles/create
 Служит для создания новой статьи
@@ -155,7 +156,6 @@ class ArticleCreateView(generics.CreateAPIView):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
 
 
 """
@@ -248,7 +248,3 @@ class UsersArticlesView(generics.ListAPIView):
     permission_classes = [IsStuffOrAdmin]
     queryset = CustomUser.objects.prefetch_related('articles')
     serializer_class = UserViewSerializer
-
-
-
-
