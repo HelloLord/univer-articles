@@ -87,7 +87,7 @@ class PDFProcessing:
     def extract_text(pdf_file: Union[str,Any]) -> Optional[str]:
         text = ""
         try:
-            if isinstance(pdf_file,str): #В случае если это просто строка.
+            if isinstance(pdf_file,str): #в случае если это просто строка.
                 return pdf_file
 
             pdf_reader = PyPDF2.PdfReader(pdf_file) #В случае если это файловый объект
