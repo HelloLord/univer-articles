@@ -1,9 +1,7 @@
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.core.validators import RegexValidator
 from django.db.models import SET_NULL
-from django.utils.translation.trans_null import gettext_lazy
 
 
 class CustomUser(AbstractUser):
@@ -51,16 +49,11 @@ class Category(models.Model):
         return self.name
 
 class Article(models.Model):
-    STATUS_CHOICES = [
-        ('submitted', 'Подана на рецензирование'),
-        ('under_review', 'Прошла рецензирование'),
-        ('published', 'Опубликована'),
-        ('rejected', 'Отклонена'),
-    ]
     title = models.CharField(
         unique= True,
         null= False,
-        help_text='Required A-z letters, and digits 0-9'
+        help_text='Required A-z letters, and digits 0-9',
+        blank=False
     )
 
     authors = models.ManyToManyField(CustomUser, related_name='articles')
@@ -69,6 +62,13 @@ class Article(models.Model):
     content = models.TextField(blank=False, null=True)
     submission_date = models.DateField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    STATUS_CHOICES = [
+        ('submitted', 'Подана на рецензирование'),
+        ('under_review', 'Прошла рецензирование'),
+        ('published', 'Опубликована'),
+        ('rejected', 'Отклонена'),
+    ]
     status = models.CharField(max_length=20, choices = STATUS_CHOICES, default='submitted')
     reviewer = models.ForeignKey(CustomUser, related_name='reviewer', blank=True, on_delete=SET_NULL, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)

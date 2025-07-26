@@ -18,11 +18,15 @@ from .pagination import LargeSetPagination,SmallSetPagination
 
 from .models import Article, CustomUser
 
-from .serializers import (BaseArticleSerializer, CustomUserSerializer,
-                          UserViewSerializer, ArticleCreateSerializer,
-                          ArticleViewByPKSerializer, ArticleReviewSerializer, ArticlePublishSerializer,
-                          ArticleRatingSerializer
-                          )
+from .serializers import (
+    BaseArticleSerializer,
+    CustomUserSerializer,
+    UserViewSerializer,
+    ArticleCreateSerializer,
+    ArticleViewByPKSerializer,
+    ArticleReviewSerializer,
+    ArticlePublishSerializer,
+    ArticleRatingSerializer)
 
 """register/"""
 class RegisterView(generics.CreateAPIView):

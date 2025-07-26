@@ -1,6 +1,5 @@
 import re
 
-from django.core.validators import RegexValidator
 from django.db.models import Avg
 from django.db.models.query_utils import logger
 from rest_framework import serializers
@@ -9,6 +8,7 @@ from datetime import date
 
 from .models import Category, Article, CustomUser, ArticleRating, UserViewHistory
 from .utils import KeywordExtract, PDFProcessing
+
 
 """CREATE USER"""
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -208,20 +208,47 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     class Meta:
         model = Article
-        fields = ['id', 'title',
-                  'abstract', 'content',
+        fields = ['id', 'title', 'content',
                   'category','pdf_file']
 
     def validate_title(self, value):
+        if not value.strip():
+            raise serializers.ValidationError('title cannot be empty')
+
         if len(value) > 50 or len(value) < 2:
             raise ValidationError("title must be least 2 characters long or cannot exceed 50 characters")
 
-        regex_validator = RegexValidator(
-            regex='^[^!@#$%^&*()+={}\[\]|\\:;"\'<>?,~`]+$',
-            message=f"{value} - contains prohibited characters"
-        )
-        regex_validator(value)
+        if not re.match(r'^[A-Za-zА-Яа-я0-9\s\-]+$', value):
+            raise serializers.ValidationError(
+                'Only letters (A-Z, a-z), digits (0-9) and (-) are allowed')
+
+        if Article.objects.filter(title__iexact = value).exists():
+            raise serializers.ValidationError(f"title '{value}' is already exists")
+
+        return value.capitalize()
+
+    def validate_content(self,value):
+        if value:
+            value = value.strip()
+
+            if not value:
+                raise serializers.ValidationError("Content cannot consist of only digits")
+
+            if value.isdigit():
+                raise serializers.ValidationError("Content cannot consist of only digits")
+
+            if len(value) < 100:
+                raise serializers.ValidationError("Content must be at least 100 charters long")
+
+            if re.match(r'^[\W_]+$', value):
+                raise serializers.ValidationError("Content must contain meaningful text, not just symbols")
+
         return value
+        
+
+
+
+
 
     def validate_pdf_file(self,value):
         return PDFProcessing.validate_pdf_file(value)
