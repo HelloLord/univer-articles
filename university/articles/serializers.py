@@ -244,10 +244,6 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Content must contain meaningful text, not just symbols")
 
         return value
-        
-
-
-
 
 
     def validate_pdf_file(self,value):
