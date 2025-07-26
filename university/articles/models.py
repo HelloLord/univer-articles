@@ -58,17 +58,11 @@ class Article(models.Model):
         ('rejected', 'Отклонена'),
     ]
     title = models.CharField(
-        error_messages={
-            'max_length': gettext_lazy('Название не может превышать 50 символов.'),
-        },
-        validators=[
-            MinLengthValidator(5, message=gettext_lazy('Название должено содержать минимум 5 символов')),
-            RegexValidator(
-                regex=r'^[^!@#$%^&*()+={}\[\]|\\:;"\'<>?,~`]+$',
-                message="Название содержит запрещенные символы."
-            ),
-        ]
+        unique= True,
+        null= False,
+        help_text='Required A-z letters, and digits 0-9'
     )
+
     authors = models.ManyToManyField(CustomUser, related_name='articles')
     abstract = models.TextField(null=False)
     keywords = models.CharField(max_length=200, null=True)

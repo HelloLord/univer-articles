@@ -42,7 +42,7 @@ class RegisterView(generics.CreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
-"""login/"""
+"""login"""
 class LoginAPIView(APIView):
 
     def post(self,request):
@@ -50,7 +50,7 @@ class LoginAPIView(APIView):
         password = request.data.get('password')
         user = authenticate(request, username=username, password=password)
 
-        if user:
+        if user is not None:
             login(request, user)
             return redirect('article-list')
         else:

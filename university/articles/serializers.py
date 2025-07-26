@@ -1,4 +1,6 @@
 import re
+
+from django.core.validators import RegexValidator
 from django.db.models import Avg
 from django.db.models.query_utils import logger
 from rest_framework import serializers
@@ -195,7 +197,6 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         return (request and request.user.is_authenticated
                 and not obj.rating.filter(user=request.user).exists())
 
-    #метод подсчета просмотров статьи
     def get_views(self,obj):
         return UserViewHistory.objects.filter(article=obj).count()
 
@@ -211,10 +212,20 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
                   'abstract', 'content',
                   'category','pdf_file']
 
+    def validate_title(self, value):
+        if len(value) > 50 or len(value) < 2:
+            raise ValidationError("title must be least 2 characters long or cannot exceed 50 characters")
+
+        regex_validator = RegexValidator(
+            regex='^[^!@#$%^&*()+={}\[\]|\\:;"\'<>?,~`]+$',
+            message=f"{value} - contains prohibited characters"
+        )
+        regex_validator(value)
+        return value
+
     def validate_pdf_file(self,value):
         return PDFProcessing.validate_pdf_file(value)
 
-        #Проверка на загрузку статьи в PDF формате, либо в формате текста
     def validate(self, data):
         content = data.get('content')
         pdf_file = data.get('pdf_file')
